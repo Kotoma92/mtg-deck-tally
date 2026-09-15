@@ -1,0 +1,36 @@
+/** A card as it exists in the bundled Scryfall index. */
+export type CardInfo = {
+  name: string;
+  colorIdentity: string;
+  typeLine: string;
+  manaCost: string;
+  cmc: number;
+  canBeCommander: boolean;
+};
+
+/** A line of the decklist, plus how many copies you've checked off so far. */
+export type DeckCard = {
+  name: string;
+  qty: number;
+  section: string;
+  found: number;
+  info?: CardInfo;
+};
+
+export type DeckSource = "paste" | "moxfield" | "archidekt";
+
+export type Deck = {
+  source: DeckSource;
+  name?: string;
+  url?: string;
+  /** The pasted text, kept so "Edit list" can reopen exactly what you typed. */
+  rawText: string;
+  cards: DeckCard[];
+  commanders: string[];
+  /** Colours actually driving the theme -- auto-detected unless you override them. */
+  colors: string[];
+  /** What the commander's identity says, before any manual override. */
+  autoColors: string[];
+};
+
+export type GroupMode = "section" | "type";
