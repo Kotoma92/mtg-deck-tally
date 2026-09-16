@@ -1,18 +1,18 @@
 import { outsideIdentity } from "../lib/colors";
 import { countCards, groupCards } from "../lib/grouping";
-import type { Deck, GroupMode } from "../lib/types";
+import type { Deck, SortMode } from "../lib/types";
 import { CardRow } from "./CardRow";
 
 type Props = {
   deck: Deck;
-  groupMode: GroupMode;
+  sortMode: SortMode;
   query: string;
   onMark: (name: string, delta: number) => void;
 };
 
-export function CardList({ deck, groupMode, query, onMark }: Props) {
+export function CardList({ deck, sortMode, query, onMark }: Props) {
   const needle = query.trim().toLowerCase();
-  const groups = groupCards(deck.cards, groupMode);
+  const groups = groupCards(deck.cards, sortMode);
 
   const visibleGroups = groups
     .map((group) => {

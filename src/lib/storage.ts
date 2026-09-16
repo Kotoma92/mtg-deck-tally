@@ -8,7 +8,12 @@ export function loadDeck(): Deck | null {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const deck = JSON.parse(raw) as Deck;
-    return deck?.cards?.length ? deck : null;
+    if (!deck?.cards?.length) return null;
+    if (deck.commanders?.length) {
+      const commanderSet = new Set(deck.commanders.map((c) => c.toLowerCase()));
+      deck.cards = deck.cards.filter((c) => !commanderSet.has(c.name.toLowerCase()));
+    }
+    return deck;
   } catch {
     return null;
   }

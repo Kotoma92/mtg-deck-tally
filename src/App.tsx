@@ -5,9 +5,10 @@ import { ImportPanel } from "./components/ImportPanel";
 import { buildDeckFromText, buildDeckFromUrl } from "./lib/buildDeck";
 import { countCards } from "./lib/grouping";
 import { clearDeck, loadDeck, saveDeck } from "./lib/storage";
-import type { ColumnLayout, Deck, GroupMode } from "./lib/types";
+import type { ColumnLayout, Deck, SortMode } from "./lib/types";
 
 const LAYOUT_STORAGE_KEY = "mtg-deck-tally/layout";
+const SORT_STORAGE_KEY = "mtg-deck-tally/sort-mode";
 
 export default function App() {
   const [deck, setDeck] = useState<Deck | null>(() => loadDeck());
@@ -15,7 +16,13 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [query, setQuery] = useState("");
-  const [groupMode, setGroupMode] = useState<GroupMode>("section");
+  const [sortMode, setSortMode] = useState<SortMode>(() => {
+    if (typeof window === "undefined") return "type";
+    const saved = localStorage.getItem(SORT_STORAGE_KEY);
+    return saved === "alpha" || saved === "mana" || saved === "type"
+      ? (saved as SortMode)
+      : "type";
+  });
   const [layout, setLayout] = useState<ColumnLayout>(() => {
     if (typeof window === "undefined") return "auto";
     const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
@@ -23,6 +30,11 @@ export default function App() {
       ? (saved as ColumnLayout)
       : "auto";
   });
+
+  function handleSortModeChange(next: SortMode) {
+    setSortMode(next);
+    localStorage.setItem(SORT_STORAGE_KEY, next);
+  }
 
   function handleLayoutChange(next: ColumnLayout) {
     setLayout(next);
@@ -106,10 +118,10 @@ export default function App() {
         found={found}
         total={total}
         query={query}
-        groupMode={groupMode}
+        sortMode={sortMode}
         layout={layout}
         onQuery={setQuery}
-        onGroupMode={setGroupMode}
+        onSortMode={handleSortModeChange}
         onLayout={handleLayoutChange}
         onSubmitQuery={submitQuery}
         onReset={() => setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) })}
@@ -121,7 +133,7 @@ export default function App() {
         }}
       />
       <main>
-        <CardList deck={deck} groupMode={groupMode} query={query} onMark={markCard} />
+        <CardList deck={deck} sortMode={sortMode} query={query} onMark={markCard} />
       </main>
     </div>
   );

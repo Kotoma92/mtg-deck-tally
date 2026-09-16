@@ -31,6 +31,7 @@ export type Deck = {
   colors: string[];
 };
 
-export type GroupMode = "section" | "type";
+export type SortMode = "alpha" | "mana" | "type";
+export type GroupMode = SortMode;
 
 export type ColumnLayout = "auto" | "1" | "2" | "3" | "4";

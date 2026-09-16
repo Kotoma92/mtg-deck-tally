@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { cardArtUrl } from "../lib/cards";
 import { colorLabel } from "../lib/colors";
-import type { ColumnLayout, Deck, GroupMode } from "../lib/types";
+import type { ColumnLayout, Deck, SortMode } from "../lib/types";
 
 type Props = {
   deck: Deck;
   found: number;
   total: number;
   query: string;
-  groupMode: GroupMode;
+  sortMode: SortMode;
   layout: ColumnLayout;
   onQuery: (value: string) => void;
-  onGroupMode: (mode: GroupMode) => void;
+  onSortMode: (mode: SortMode) => void;
   onLayout: (layout: ColumnLayout) => void;
   onSubmitQuery?: () => void;
   onReset: () => void;
@@ -20,8 +20,8 @@ type Props = {
 };
 
 export function DeckHeader({
-  deck, found, total, query, groupMode, layout,
-  onQuery, onGroupMode, onLayout, onSubmitQuery, onReset, onEdit, onNew,
+  deck, found, total, query, sortMode, layout,
+  onQuery, onSortMode, onLayout, onSubmitQuery, onReset, onEdit, onNew,
 }: Props) {
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
@@ -104,11 +104,26 @@ export function DeckHeader({
             placeholder="Jump to a card… (Enter to check)"
             autoComplete="off"
           />
-          <div className="segmented" role="group" aria-label="Group cards by">
-            <button aria-pressed={groupMode === "section"} onClick={() => onGroupMode("section")}>
-              Section
+          <div className="segmented" role="group" aria-label="Sort and group cards by">
+            <button
+              aria-pressed={sortMode === "alpha"}
+              onClick={() => onSortMode("alpha")}
+              title="Sort alphabetically A–Z"
+            >
+              Alphabetical
             </button>
-            <button aria-pressed={groupMode === "type"} onClick={() => onGroupMode("type")}>
+            <button
+              aria-pressed={sortMode === "mana"}
+              onClick={() => onSortMode("mana")}
+              title="Group by mana value curve"
+            >
+              Mana Value
+            </button>
+            <button
+              aria-pressed={sortMode === "type"}
+              onClick={() => onSortMode("type")}
+              title="Group by card type"
+            >
               Type
             </button>
           </div>

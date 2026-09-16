@@ -43,12 +43,18 @@ export async function buildDeck(input: BuildInput, previous?: Deck | null): Prom
     const info = index.get(name.toLowerCase());
     for (const color of info?.colorIdentity ?? "") identity.add(color);
   }
+
+  // Ditch the tallyable commander -- it's implicit that the commander is correct.
+  // The tally list contains only the remaining 99 (or 98 for partner commanders) cards.
+  const commanderSet = new Set(commanders.map((name) => name.toLowerCase()));
+  const tallyCards = cards.filter((card) => !commanderSet.has(card.name.toLowerCase()));
+
   return {
     source: input.source,
     name: input.name,
     url: input.url,
     rawText: input.rawText,
-    cards,
+    cards: tallyCards,
     commanders,
     colors: canonicalColors(identity),
   };
