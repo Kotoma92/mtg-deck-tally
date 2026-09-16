@@ -574,6 +574,142 @@ textarea {
   padding: 12px 4px;
 }
 
+/* ---------- moxfield user deck picker ---------- */
+
+.mox-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mox-user-inputs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mox-user-inputs input {
+  flex: 1 1 200px;
+}
+
+.mox-user-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+}
+
+.mox-user-info {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.mox-user-info strong {
+  color: var(--accent);
+}
+
+.mox-user-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mox-btn-text {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.mox-btn-text:hover:not(:disabled) {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--line) 40%, transparent);
+}
+
+.mox-filter-row input {
+  width: 100%;
+}
+
+.mox-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.mox-deck-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  white-space: normal;
+}
+
+.mox-deck-card:hover:not(:disabled) {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.mox-deck-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mox-deck-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.mox-deck-format {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  border: 1px solid var(--line);
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+
+.mox-deck-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  gap: 8px;
+}
+
+.mox-deck-meta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.75rem;
+}
+
+.mox-deck-date {
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MoxfieldUserPicker } from "./MoxfieldUserPicker";
 
 type Props = {
   initialText?: string;
@@ -11,13 +12,21 @@ type Props = {
 };
 
 export function ImportPanel({ initialText, busy, error, canCancel, onPaste, onLink, onCancel }: Props) {
-  const [mode, setMode] = useState<"link" | "paste">(initialText ? "paste" : "link");
+  const hasSavedUser = typeof window !== "undefined" && !!localStorage.getItem("mtg-deck-tally/moxfield-user");
+  const [mode, setMode] = useState<"moxfield" | "link" | "paste">(() => {
+    if (initialText) return "paste";
+    if (hasSavedUser) return "moxfield";
+    return "moxfield";
+  });
   const [text, setText] = useState(initialText ?? "");
   const [url, setUrl] = useState("");
 
   return (
     <section className="import-panel">
       <div className="tabs" role="tablist">
+        <button role="tab" aria-selected={mode === "moxfield"} onClick={() => setMode("moxfield")}>
+          Moxfield decks
+        </button>
         <button role="tab" aria-selected={mode === "link"} onClick={() => setMode("link")}>
           From a link
         </button>
@@ -26,7 +35,9 @@ export function ImportPanel({ initialText, busy, error, canCancel, onPaste, onLi
         </button>
       </div>
 
-      {mode === "link" ? (
+      {mode === "moxfield" ? (
+        <MoxfieldUserPicker busy={busy} onSelectDeck={onLink} />
+      ) : mode === "link" ? (
         <form
           className="link-form"
           onSubmit={(event) => {
