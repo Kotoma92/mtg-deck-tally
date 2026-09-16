@@ -47,30 +47,34 @@ export function CardList({ deck, groupMode, query, onMark }: Props) {
               </span>
             </div>
 
-            {group.remaining.map((card) => (
-              <CardRow
-                key={card.name}
-                card={card}
-                illegal={!!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
-                onMark={() => onMark(card.name, 1)}
-                onUndo={() => onMark(card.name, -1)}
-              />
-            ))}
+            <div className="card-grid">
+              {group.remaining.map((card) => (
+                <CardRow
+                  key={card.name}
+                  card={card}
+                  illegal={!!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
+                  onMark={() => onMark(card.name, 1)}
+                  onUndo={() => onMark(card.name, -1)}
+                />
+              ))}
+            </div>
 
             {!group.remaining.length && !needle && <p className="empty-msg">All checked off.</p>}
 
             {group.complete.length > 0 && (
               <details className="found-block">
                 <summary>Found ({group.complete.length})</summary>
-                {group.complete.map((card) => (
-                  <CardRow
-                    key={card.name}
-                    card={card}
-                    illegal={false}
-                    onMark={() => onMark(card.name, -card.qty)}
-                    onUndo={() => onMark(card.name, -card.qty)}
-                  />
-                ))}
+                <div className="card-grid">
+                  {group.complete.map((card) => (
+                    <CardRow
+                      key={card.name}
+                      card={card}
+                      illegal={false}
+                      onMark={() => onMark(card.name, -card.qty)}
+                      onUndo={() => onMark(card.name, -card.qty)}
+                    />
+                  ))}
+                </div>
               </details>
             )}
           </section>

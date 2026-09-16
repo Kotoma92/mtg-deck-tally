@@ -32,3 +32,5 @@ export type Deck = {
 };
 
 export type GroupMode = "section" | "type";
+
+export type ColumnLayout = "auto" | "1" | "2" | "3" | "4";

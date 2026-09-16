@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { cardArtUrl } from "../lib/cards";
 import { colorLabel } from "../lib/colors";
-import type { Deck, GroupMode } from "../lib/types";
+import type { ColumnLayout, Deck, GroupMode } from "../lib/types";
 
 type Props = {
   deck: Deck;
@@ -9,16 +9,19 @@ type Props = {
   total: number;
   query: string;
   groupMode: GroupMode;
+  layout: ColumnLayout;
   onQuery: (value: string) => void;
   onGroupMode: (mode: GroupMode) => void;
+  onLayout: (layout: ColumnLayout) => void;
+  onSubmitQuery?: () => void;
   onReset: () => void;
   onEdit: () => void;
   onNew: () => void;
 };
 
 export function DeckHeader({
-  deck, found, total, query, groupMode,
-  onQuery, onGroupMode, onReset, onEdit, onNew,
+  deck, found, total, query, groupMode, layout,
+  onQuery, onGroupMode, onLayout, onSubmitQuery, onReset, onEdit, onNew,
 }: Props) {
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
@@ -92,7 +95,13 @@ export function DeckHeader({
             type="search"
             value={query}
             onChange={(event) => onQuery(event.target.value)}
-            placeholder="Jump to a card…"
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && onSubmitQuery) {
+                event.preventDefault();
+                onSubmitQuery();
+              }
+            }}
+            placeholder="Jump to a card… (Enter to check)"
             autoComplete="off"
           />
           <div className="segmented" role="group" aria-label="Group cards by">
@@ -103,7 +112,51 @@ export function DeckHeader({
               Type
             </button>
           </div>
-          <button onClick={onReset} title="Clear all checkmarks">
+          <div className="segmented" role="group" aria-label="Columns">
+            <button
+              aria-pressed={layout === "auto"}
+              onClick={() => onLayout("auto")}
+              title="Auto columns based on screen width"
+            >
+              Auto
+            </button>
+            <button
+              aria-pressed={layout === "1"}
+              onClick={() => onLayout("1")}
+              title="1 column"
+            >
+              1
+            </button>
+            <button
+              aria-pressed={layout === "2"}
+              onClick={() => onLayout("2")}
+              title="2 columns"
+            >
+              2
+            </button>
+            <button
+              aria-pressed={layout === "3"}
+              onClick={() => onLayout("3")}
+              title="3 columns"
+            >
+              3
+            </button>
+            <button
+              aria-pressed={layout === "4"}
+              onClick={() => onLayout("4")}
+              title="4 columns"
+            >
+              4
+            </button>
+          </div>
+          <button
+            onClick={() => {
+              if (found === 0 || window.confirm("Reset all checkmarks?")) {
+                onReset();
+              }
+            }}
+            title="Clear all checkmarks"
+          >
             Reset
           </button>
           <button onClick={onEdit}>Edit list</button>

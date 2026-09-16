@@ -48,6 +48,27 @@ body {
 .wrap {
   max-width: 760px;
   margin: 0 auto;
+  transition: max-width 0.2s ease;
+}
+
+.wrap.layout-auto {
+  max-width: 1560px;
+}
+
+.wrap.layout-1 {
+  max-width: 760px;
+}
+
+.wrap.layout-2 {
+  max-width: 1040px;
+}
+
+.wrap.layout-3 {
+  max-width: 1440px;
+}
+
+.wrap.layout-4 {
+  max-width: 1800px;
 }
 
 h1,
@@ -360,6 +381,7 @@ button.primary {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-width: 760px;
 }
 
 textarea {
@@ -402,7 +424,7 @@ textarea {
   gap: 8px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .group-head h2 {
@@ -420,6 +442,54 @@ textarea {
   margin-left: auto;
 }
 
+/* ---------- card grid layouts ---------- */
+
+.card-grid {
+  display: grid;
+  gap: 6px 10px;
+}
+
+.wrap.layout-auto .card-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.wrap.layout-1 .card-grid {
+  grid-template-columns: 1fr;
+}
+
+.wrap.layout-2 .card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wrap.layout-3 .card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.wrap.layout-4 .card-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+  .wrap.layout-4 .card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .wrap.layout-3 .card-grid,
+  .wrap.layout-4 .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .wrap.layout-2 .card-grid,
+  .wrap.layout-3 .card-grid,
+  .wrap.layout-4 .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .row {
   position: relative;
   display: flex;
@@ -429,6 +499,25 @@ textarea {
   border-radius: 7px;
   cursor: pointer;
   user-select: none;
+}
+
+.card-grid .row {
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper-raised) 50%, transparent);
+  border-radius: 7px;
+  padding: 8px 10px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.card-grid .row:hover {
+  background: var(--paper-raised);
+  border-color: var(--accent-soft);
+}
+
+.card-grid .row.done {
+  opacity: 0.55;
+  background: color-mix(in srgb, var(--paper) 60%, transparent);
+  border-color: color-mix(in srgb, var(--line) 40%, transparent);
 }
 
 .row:hover {
@@ -549,12 +638,19 @@ textarea {
 .card-preview {
   position: absolute;
   right: 8px;
-  bottom: calc(100% - 4px);
+  bottom: calc(100% + 4px);
   width: 220px;
+  max-height: 310px;
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.55);
   pointer-events: none;
-  z-index: 20;
+  z-index: 50;
+}
+
+@media (hover: none) {
+  .card-preview {
+    display: none;
+  }
 }
 
 .found-block {

@@ -5,7 +5,9 @@ import { ImportPanel } from "./components/ImportPanel";
 import { buildDeckFromText, buildDeckFromUrl } from "./lib/buildDeck";
 import { countCards } from "./lib/grouping";
 import { clearDeck, loadDeck, saveDeck } from "./lib/storage";
-import type { Deck, GroupMode } from "./lib/types";
+import type { ColumnLayout, Deck, GroupMode } from "./lib/types";
+
+const LAYOUT_STORAGE_KEY = "mtg-deck-tally/layout";
 
 export default function App() {
   const [deck, setDeck] = useState<Deck | null>(() => loadDeck());
@@ -14,6 +16,18 @@ export default function App() {
   const [error, setError] = useState<string>();
   const [query, setQuery] = useState("");
   const [groupMode, setGroupMode] = useState<GroupMode>("section");
+  const [layout, setLayout] = useState<ColumnLayout>(() => {
+    if (typeof window === "undefined") return "auto";
+    const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
+    return saved === "auto" || saved === "1" || saved === "2" || saved === "3" || saved === "4"
+      ? (saved as ColumnLayout)
+      : "auto";
+  });
+
+  function handleLayoutChange(next: ColumnLayout) {
+    setLayout(next);
+    localStorage.setItem(LAYOUT_STORAGE_KEY, next);
+  }
 
   useEffect(() => {
     if (deck) saveDeck(deck);
@@ -50,9 +64,21 @@ export default function App() {
     );
   }
 
+  function submitQuery() {
+    const needle = query.trim().toLowerCase();
+    if (!needle || !deck) return;
+    const match = deck.cards.find(
+      (c) => c.found < c.qty && c.name.toLowerCase().includes(needle),
+    );
+    if (match) {
+      markCard(match.name, 1);
+      setQuery("");
+    }
+  }
+
   if (importing || !deck) {
     return (
-      <div className="wrap">
+      <div className={`wrap layout-${layout}`}>
         <header className="bare-header">
           <h1>Deck Tally</h1>
           <p className="tagline">Check a physical deck against its list, card by card.</p>
@@ -74,15 +100,18 @@ export default function App() {
   }
 
   return (
-    <div className="wrap">
+    <div className={`wrap layout-${layout}`}>
       <DeckHeader
         deck={deck}
         found={found}
         total={total}
         query={query}
         groupMode={groupMode}
+        layout={layout}
         onQuery={setQuery}
         onGroupMode={setGroupMode}
+        onLayout={handleLayoutChange}
+        onSubmitQuery={submitQuery}
         onReset={() => setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) })}
         onEdit={() => setImporting(true)}
         onNew={() => {
