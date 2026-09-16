@@ -37,6 +37,35 @@ export default {
       }
     }
 
+    // API Route for listing a Moxfield user's public decks
+    if (url.pathname === "/api/moxfield/decks") {
+      const username = url.searchParams.get("username")?.trim();
+      if (!username) return json({ error: "Missing username parameter." }, 400);
+
+      const page = url.searchParams.get("page") || "1";
+      const pageSize = url.searchParams.get("pageSize") || "40";
+      const moxUrl = `https://api2.moxfield.com/v2/decks/search?authorUserNames=${encodeURIComponent(username)}&pageNumber=${page}&pageSize=${pageSize}&sortType=updated&sortDirection=descending`;
+
+      try {
+        const response = await fetch(moxUrl, {
+          headers: {
+            "User-Agent": "MTGDeckTally/1.0 (+https://github.com/Kotoma92/mtg-deck-tally)",
+            "Accept": "application/json",
+          },
+        });
+        if (!response.ok) {
+          if (response.status === 404) {
+            return json({ error: `Could not find Moxfield user "${username}". Check the spelling.` }, 404);
+          }
+          return json({ error: `Moxfield responded with HTTP ${response.status}.` }, response.status);
+        }
+        const data = await response.json();
+        return json(data);
+      } catch (err: any) {
+        return json({ error: err.message }, 502);
+      }
+    }
+
     // For cards.db, ensure byte-range and content headers are preserved
     if (url.pathname === "/cards.db") {
       if (request.method === "HEAD") {
