@@ -85,8 +85,8 @@ worker and wasm are loaded as separate `?url` imports, so pre-bundling is safe.
   Moxfield's API without issue.
 - The Worker handles `/api/deck` directly and intercepts `/cards.db` to
   guarantee proper `206 Partial Content` and `Accept-Ranges` byte-range handling.
-- Card data refresh: `python scripts/build_db.py` (downloads ~180MB of Scryfall
-  bulk data), or `--from-sqlite <path>` to build from an existing index.
+- Card data refresh: `npm run refresh:db` or `python scripts/build_db.py --refresh` (downloads ~180MB of fresh Scryfall
+  bulk data). To re-index an existing download without re-downloading, run `npm run build:db`. To build from an existing index: `--from-sqlite <path>`.
 
 ## This machine
 

@@ -89,7 +89,10 @@ def download_bulk() -> None:
     print(f"      saved {os.path.getsize(BULK) / 1e6:.0f}MB -> {BULK}")
 
 
-def rows_from_bulk():
+def rows_from_bulk(refresh: bool = False):
+    if refresh and os.path.exists(BULK):
+        print(f"Removing cached {BULK} to fetch fresh data...")
+        os.remove(BULK)
     if not os.path.exists(BULK):
         download_bulk()
     with open(BULK, encoding="utf-8") as fh:
@@ -154,8 +157,9 @@ def build(rows) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--from-sqlite", metavar="PATH", help="build from an existing mtg-deck-tune cards.db")
+    parser.add_argument("--refresh", "-r", action="store_true", help="force re-download latest bulk data from Scryfall")
     args = parser.parse_args()
-    build(rows_from_sqlite(args.from_sqlite) if args.from_sqlite else rows_from_bulk())
+    build(rows_from_sqlite(args.from_sqlite) if args.from_sqlite else rows_from_bulk(refresh=args.refresh))
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "build:db": "python scripts/build_db.py",
+    "refresh:db": "python scripts/build_db.py --refresh",
     "deploy": "npm run build && npx wrangler deploy",
     "deploy:staging": "npm run build && npx wrangler deploy --env staging"
   },
