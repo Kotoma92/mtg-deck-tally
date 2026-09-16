@@ -60,10 +60,88 @@ export async function buildDeck(input: BuildInput, previous?: Deck | null): Prom
   };
 }
 
+export type PreparedDeck = {
+  rawText: string;
+  cards: DeckCard[];
+  eligibleCommanders: DeckCard[];
+  suggestedCommanders: string[];
+};
+
+export async function prepareDeckFromText(
+  text: string,
+  previous?: Deck | null,
+): Promise<PreparedDeck> {
+  const rawCards = parseDecklist(text);
+  if (!rawCards.length) throw new Error("No cards found -- paste a list like \"1 Sol Ring\".");
+
+  const index = await lookupCards(rawCards.map((c) => c.name));
+  const priorProgress = new Map(
+    (previous?.cards ?? []).map((card) => [card.name.toLowerCase(), card.found]),
+  );
+
+  const cards: DeckCard[] = rawCards.map((card) => {
+    const info = index.get(card.name.toLowerCase());
+    return {
+      ...card,
+      name: info?.name ?? card.name,
+      info,
+      found: Math.min(priorProgress.get(card.name.toLowerCase()) ?? 0, card.qty),
+    };
+  });
+
+  const eligibleCommanders: DeckCard[] = [];
+  const seenEligible = new Set<string>();
+  for (const c of cards) {
+    const key = c.name.toLowerCase();
+    if (c.info?.canBeCommander && !seenEligible.has(key)) {
+      seenEligible.add(key);
+      eligibleCommanders.push(c);
+    }
+  }
+  let suggested = commandersFromSections(cards);
+  if (!suggested.length) suggested = inferCommanders(cards);
+  if (!suggested.length && previous?.commanders?.length) {
+    const prevNames = new Set(previous.commanders.map((c) => c.toLowerCase()));
+    suggested = cards.filter((c) => prevNames.has(c.name.toLowerCase())).map((c) => c.name);
+  }
+  if (!suggested.length && eligibleCommanders.length === 1) {
+    suggested = [eligibleCommanders[0].name];
+  }
+
+  return {
+    rawText: text,
+    cards,
+    eligibleCommanders,
+    suggestedCommanders: suggested,
+  };
+}
+
+export function finalizeDeck(
+  prepared: { rawText: string; cards: DeckCard[] },
+  commanders: string[],
+): Deck {
+  const commanderSet = new Set(commanders.map((name) => name.toLowerCase()));
+  const tallyCards = prepared.cards.filter((card) => !commanderSet.has(card.name.toLowerCase()));
+
+  const identity = new Set<string>();
+  for (const card of prepared.cards) {
+    if (commanderSet.has(card.name.toLowerCase())) {
+      for (const color of card.info?.colorIdentity ?? "") identity.add(color);
+    }
+  }
+
+  return {
+    source: "paste",
+    rawText: prepared.rawText,
+    cards: tallyCards,
+    commanders,
+    colors: canonicalColors(identity),
+  };
+}
+
 export async function buildDeckFromText(text: string, previous?: Deck | null): Promise<Deck> {
-  const cards = parseDecklist(text);
-  if (!cards.length) throw new Error("No cards found -- paste a list like \"1 Sol Ring\".");
-  return buildDeck({ source: "paste", rawText: text, cards }, previous);
+  const prepared = await prepareDeckFromText(text, previous);
+  return finalizeDeck(prepared, prepared.suggestedCommanders);
 }
 
 type ImportedDeck = {
