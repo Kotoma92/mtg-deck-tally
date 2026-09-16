@@ -68,16 +68,24 @@ export default {
 
     // For cards.db, ensure byte-range and content headers are preserved
     if (url.pathname === "/cards.db") {
+      const assetResponse = await env.ASSETS.fetch(new Request(request.url, { method: "GET" }));
+      const buffer = await assetResponse.arrayBuffer();
+      const totalLength = buffer.byteLength;
+
+      const cacheControl = url.searchParams.has("v")
+        ? "public, max-age=31536000, immutable"
+        : "public, max-age=300";
+
       if (request.method === "HEAD") {
         return new Response(null, {
           status: 200,
           headers: {
             "Content-Type": "application/octet-stream",
-            "Content-Length": "1945600",
+            "Content-Length": String(totalLength),
             "Accept-Ranges": "bytes",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
-            "Cache-Control": "public, max-age=31536000, immutable",
+            "Cache-Control": cacheControl,
           },
         });
       }
@@ -86,39 +94,34 @@ export default {
       if (rangeHeader) {
         const match = rangeHeader.match(/bytes=(\d+)-(\d+)?/);
         if (match) {
-          const assetResponse = await env.ASSETS.fetch(request);
-          if (assetResponse.status === 206) {
-            return assetResponse;
-          }
-          const buffer = await assetResponse.arrayBuffer();
           const start = parseInt(match[1], 10);
-          const end = match[2] ? parseInt(match[2], 10) : buffer.byteLength - 1;
+          const end = match[2] ? parseInt(match[2], 10) : totalLength - 1;
           const chunk = buffer.slice(start, end + 1);
           return new Response(chunk, {
             status: 206,
             headers: {
-              "Content-Range": `bytes ${start}-${end}/${buffer.byteLength}`,
+              "Content-Range": `bytes ${start}-${end}/${totalLength}`,
               "Content-Length": String(chunk.byteLength),
               "Content-Type": "application/octet-stream",
               "Accept-Ranges": "bytes",
               "Access-Control-Allow-Origin": "*",
               "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
-              "Cache-Control": "public, max-age=31536000, immutable",
+              "Cache-Control": cacheControl,
             },
           });
         }
       }
 
-      const assetResponse = await env.ASSETS.fetch(request);
-      const headers = new Headers(assetResponse.headers);
-      headers.set("Accept-Ranges", "bytes");
-      headers.set("Content-Type", "application/octet-stream");
-      headers.set("Access-Control-Allow-Origin", "*");
-      headers.set("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges");
-      return new Response(assetResponse.body, {
-        status: assetResponse.status,
-        statusText: assetResponse.statusText,
-        headers,
+      return new Response(buffer, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "Content-Length": String(totalLength),
+          "Accept-Ranges": "bytes",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
+          "Cache-Control": cacheControl,
+        },
       });
     }
 
