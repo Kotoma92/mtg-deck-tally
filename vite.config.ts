@@ -1,6 +1,17 @@
+import fs from "node:fs";
+import crypto from "node:crypto";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { parseDeckUrl, fetchDeck } from "./shared/deck-sources.mjs";
+
+function getCardsDbVersion(): string {
+  try {
+    const file = fs.readFileSync("public/cards.db");
+    return crypto.createHash("md5").update(file).digest("hex").slice(0, 10);
+  } catch {
+    return Date.now().toString(36);
+  }
+}
 
 /**
  * In production /api/deck is a Cloudflare Pages Function. This serves the same
@@ -31,6 +42,9 @@ function deckApiDevServer(): Plugin {
 }
 
 export default defineConfig({
+  define: {
+    __CARDS_DB_VERSION__: JSON.stringify(getCardsDbVersion()),
+  },
   plugins: [react(), deckApiDevServer()],
   // sql.js-httpvfs is CommonJS, so it must be pre-bundled for its named exports
   // to resolve in dev. Its worker and wasm are imported separately as ?url

@@ -17,7 +17,7 @@ function db() {
         from: "inline",
         config: {
           serverMode: "full",
-          url: `${import.meta.env.BASE_URL}cards.db`,
+          url: `${import.meta.env.BASE_URL}cards.db?v=${__CARDS_DB_VERSION__}`,
           // Must match the page_size the database was built with.
           requestChunkSize: 4096,
         },
