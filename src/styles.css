@@ -1,30 +1,30 @@
 :root {
-  --paper: #eef1ea;
-  --paper-raised: #e2e7dd;
-  --ink: #1b241d;
-  --ink-soft: #58635a;
-  --line: #ccd3c4;
-  --accent: #8a6a1e;
-  --accent-soft: #cbb37a;
-  --found: #3f6b52;
-  --found-soft: #d9e7dd;
-  --alert: #9a4a2f;
+  --paper: #f7f6f5;
+  --paper-raised: #eae8e6;
+  --ink: #141316;
+  --ink-soft: #635f66;
+  --line: #d6d2d0;
+  --accent: #c62828;
+  --accent-soft: #e57373;
+  --found: #b71c1c;
+  --found-soft: #fde8e8;
+  --alert: #d97706;
   /* A paper grain, generated rather than shipped as an image. */
   --grain: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNDAiIGhlaWdodD0iMTQwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44NSIgbnVtT2N0YXZlcz0iMiIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjxmZUNvbG9yTWF0cml4IHR5cGU9Im1hdHJpeCIgdmFsdWVzPSIwIDAgMCAwIDAgIDAgMCAwIDAgMCAgMCAwIDAgMCAwICAwIDAgMCAwLjA1IDAiLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWx0ZXI9InVybCgjbikiLz48L3N2Zz4=");
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #15190f;
-    --paper-raised: #1e2419;
-    --ink: #e7e9df;
-    --ink-soft: #a2ab99;
-    --line: #333c2c;
-    --accent: #c9a227;
-    --accent-soft: #7d6a35;
-    --found: #6bbf94;
-    --found-soft: #1e2f24;
-    --alert: #d98b6a;
+    --paper: #101014;
+    --paper-raised: #19181d;
+    --ink: #f4f3f6;
+    --ink-soft: #9896a0;
+    --line: #2b2a32;
+    --accent: #e53935;
+    --accent-soft: #852222;
+    --found: #e53935;
+    --found-soft: #281215;
+    --alert: #f59e0b;
   }
 }
 
@@ -289,7 +289,7 @@ button:disabled {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--paper);
+  color: #ffffff;
 }
 
 :where(input, button, [tabindex]):focus-visible {
@@ -319,7 +319,7 @@ button.primary {
 .tabs button[aria-selected="true"] {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--paper);
+  color: #ffffff;
 }
 
 /* ---------- import ---------- */
