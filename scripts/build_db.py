@@ -17,6 +17,7 @@ The output is tuned for sql.js-httpvfs: a small page size so each range
 request pulls only the pages a query touches, and VACUUM so pages are packed.
 """
 import argparse
+import gzip
 import json
 import os
 import sqlite3
@@ -26,7 +27,7 @@ import urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
 DATA = os.path.join(ROOT, "data")
-BULK = os.path.join(DATA, "oracle-cards.json")
+BULK = os.path.join(DATA, "oracle-cards.jsonl.gz")
 OUT = os.path.join(ROOT, "public", "cards.db")
 
 USER_AGENT = "MTGDeckTally/1.0"
@@ -79,14 +80,18 @@ def download_bulk() -> None:
     )
     with urllib.request.urlopen(req) as resp:
         catalog = json.load(resp)
-    uri = next(b["download_uri"] for b in catalog["data"] if b["type"] == "oracle_cards")
+    uri = next(
+        (b.get("jsonl_download_uri") or b.get("download_uri"))
+        for b in catalog["data"]
+        if b["type"] == "oracle_cards"
+    )
     print(f"      {uri}")
-    print("      downloading (~180MB, this takes a minute)...")
+    print("      downloading (~25MB)...")
     dl = urllib.request.Request(uri, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(dl) as resp, open(BULK, "wb") as fh:
         while chunk := resp.read(1 << 20):
             fh.write(chunk)
-    print(f"      saved {os.path.getsize(BULK) / 1e6:.0f}MB -> {BULK}")
+    print(f"      saved {os.path.getsize(BULK) / 1e6:.1f}MB -> {BULK}")
 
 
 def rows_from_bulk(refresh: bool = False):
@@ -95,21 +100,25 @@ def rows_from_bulk(refresh: bool = False):
         os.remove(BULK)
     if not os.path.exists(BULK):
         download_bulk()
-    with open(BULK, encoding="utf-8") as fh:
-        cards = json.load(fh)
-    for card in cards:
-        if card.get("layout") in SKIP_LAYOUTS:
-            continue
-        type_line = face_value(card, "type_line")
-        oracle_text = face_value(card, "oracle_text")
-        yield (
-            card["name"],
-            canonical_identity(card.get("color_identity")),
-            type_line,
-            face_value(card, "mana_cost"),
-            card.get("cmc", 0) or 0,
-            commander_eligible(type_line, oracle_text),
-        )
+
+    fh = gzip.open(BULK, "rt", encoding="utf-8") if BULK.endswith(".gz") else open(BULK, encoding="utf-8")
+    try:
+        for line in fh:
+            card = json.loads(line)
+            if card.get("layout") in SKIP_LAYOUTS:
+                continue
+            type_line = face_value(card, "type_line")
+            oracle_text = face_value(card, "oracle_text")
+            yield (
+                card["name"],
+                canonical_identity(card.get("color_identity")),
+                type_line,
+                face_value(card, "mana_cost"),
+                card.get("cmc", 0) or 0,
+                commander_eligible(type_line, oracle_text),
+            )
+    finally:
+        fh.close()
 
 
 def rows_from_sqlite(path: str):
