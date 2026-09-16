@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cardImageUrl } from "../lib/cards";
 import type { DeckCard } from "../lib/types";
+import { ManaCost } from "./ManaCost";
 
 type Props = {
   card: DeckCard;
@@ -35,7 +36,7 @@ export function CardRow({ card, illegal, onMark, onUndo }: Props) {
 
       <span className="name">
         {card.name}
-        {card.info?.manaCost && <span className="mana mono">{card.info.manaCost}</span>}
+        {card.info?.manaCost && <ManaCost cost={card.info.manaCost} />}
         {!card.info && <span className="tag tag-unknown">not in index</span>}
         {illegal && (
           <span className="tag tag-illegal" title="Outside your commander's color identity">

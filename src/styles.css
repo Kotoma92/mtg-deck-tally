@@ -545,11 +545,28 @@ textarea {
   flex-wrap: wrap;
 }
 
-.mana {
-  font-size: 0.74rem;
+.mana-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+
+.mana-symbol {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: -1px 1px 0 rgb(0 0 0 / 0.85);
+  display: inline-block;
+  flex: 0 0 14px;
+}
+
+.mana-sep {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
   color: var(--ink-soft);
-  opacity: 0.8;
-  letter-spacing: 0.02em;
+  margin: 0 2px;
 }
 
 .tag {
