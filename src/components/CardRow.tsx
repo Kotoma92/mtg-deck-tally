@@ -57,16 +57,18 @@ export function CardRow({ card, illegal, onMark, onUndo }: Props) {
         </span>
       )}
 
-      <button
-        className="undo"
-        title={done ? "Move back to remaining" : "Undo last check"}
-        onClick={(event) => {
-          event.stopPropagation();
-          onUndo();
-        }}
-      >
-        ↺
-      </button>
+      {card.qty > 1 && card.found > 0 && (
+        <button
+          className="undo"
+          title={done ? "Move back to remaining" : "Undo last check"}
+          onClick={(event) => {
+            event.stopPropagation();
+            onUndo();
+          }}
+        >
+          ↺
+        </button>
+      )}
 
       {preview && (
         <img className="card-preview" src={cardImageUrl(card.name)} alt="" loading="lazy" aria-hidden />
