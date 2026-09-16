@@ -76,12 +76,15 @@ worker and wasm are loaded as separate `?url` imports, so pre-bundling is safe.
 
 ## State as of this writing
 
-- Hosting: **Cloudflare Pages is the plan and is not set up yet.** Build
-  command `npm run build`, output `dist`, and the `functions/` directory is
-  picked up automatically.
-- The repo previously deployed to GitHub Pages. `index.html` is now a Vite
-  entry template, so **GitHub Pages serves a blank page** until Pages is either
-  disabled or pointed at a built artifact.
+- Hosting: **Live on Cloudflare Workers with Static Assets** at
+  `https://tally.rolandtech.org` (Worker service `mtg-deck-tally`). Configured via
+  `wrangler.json` and `src/worker.ts` with `run_worker_first: true`. Deploy via:
+  `npm run deploy` (requires `CLOUDFLARE_API_TOKEN`).
+- **Moxfield links work in production!** While Node gets 403 HTML challenges
+  from Cloudflare bot protection, Cloudflare Workers' network path reaches
+  Moxfield's API without issue.
+- The Worker handles `/api/deck` directly and intercepts `/cards.db` to
+  guarantee proper `206 Partial Content` and `Accept-Ranges` byte-range handling.
 - Card data refresh: `python scripts/build_db.py` (downloads ~180MB of Scryfall
   bulk data), or `--from-sqlite <path>` to build from an existing index.
 
