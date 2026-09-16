@@ -506,6 +506,8 @@ textarea {
   background: color-mix(in srgb, var(--paper-raised) 50%, transparent);
   border-radius: 7px;
   padding: 8px 10px;
+  height: 42px;
+  box-sizing: border-box;
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -538,11 +540,21 @@ textarea {
 
 .name {
   flex: 1 1 auto;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.card-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 .mana-cost {

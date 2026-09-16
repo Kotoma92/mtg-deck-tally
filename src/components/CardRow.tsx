@@ -14,11 +14,19 @@ export function CardRow({ card, illegal, onMark, onUndo }: Props) {
   const [preview, setPreview] = useState(false);
   const done = card.found >= card.qty;
 
+  // If a DFC/split card name is long, show the primary (front) face to keep the tile sleek and slim.
+  // The full card name is always retained in the title attribute and for search.
+  const displayName =
+    card.name.includes(" // ") && card.name.length > 24
+      ? card.name.split(" // ")[0]
+      : card.name;
+
   return (
     <div
       className={`row${done ? " done" : ""}`}
       role="button"
       tabIndex={0}
+      title={card.name}
       aria-label={`${card.name}, ${card.found} of ${card.qty} found`}
       onClick={onMark}
       onKeyDown={(event) => {
@@ -35,7 +43,9 @@ export function CardRow({ card, illegal, onMark, onUndo }: Props) {
       <span className="qty mono">×{card.qty}</span>
 
       <span className="name">
-        {card.name}
+        <span className="card-title" title={card.name}>
+          {displayName}
+        </span>
         {card.info?.manaCost && <ManaCost cost={card.info.manaCost} />}
         {!card.info && <span className="tag tag-unknown">not in index</span>}
         {illegal && (

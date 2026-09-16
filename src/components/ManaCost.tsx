@@ -14,7 +14,10 @@ export function manaSymbolUrl(symbol: string): string {
 export const ManaCost = memo(function ManaCost({ cost }: Props) {
   if (!cost) return null;
 
-  const tokens = cost.match(/\{[^}]+\}|\/\//g) || [];
+  const rawTokens = cost.match(/\{[^}]+\}|\/\//g) || [];
+  const tokens = [...rawTokens];
+  while (tokens.length && tokens[tokens.length - 1] === "//") tokens.pop();
+  while (tokens.length && tokens[0] === "//") tokens.shift();
   if (!tokens.length) return null;
 
   return (
