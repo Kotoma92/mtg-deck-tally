@@ -113,7 +113,7 @@ export function MoxfieldUserPicker({ busy, onSelectDeck }: Props) {
               type="text"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
-              placeholder="e.g. Kotoma"
+              placeholder="e.g. username"
               aria-label="Moxfield username"
               autoCapitalize="none"
               autoCorrect="off"
