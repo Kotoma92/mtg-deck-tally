@@ -43,8 +43,6 @@ export async function buildDeck(input: BuildInput, previous?: Deck | null): Prom
     const info = index.get(name.toLowerCase());
     for (const color of info?.colorIdentity ?? "") identity.add(color);
   }
-  const autoColors = canonicalColors(identity);
-
   return {
     source: input.source,
     name: input.name,
@@ -52,8 +50,7 @@ export async function buildDeck(input: BuildInput, previous?: Deck | null): Prom
     rawText: input.rawText,
     cards,
     commanders,
-    colors: autoColors,
-    autoColors,
+    colors: canonicalColors(identity),
   };
 }
 

@@ -27,10 +27,8 @@ export type Deck = {
   rawText: string;
   cards: DeckCard[];
   commanders: string[];
-  /** Colours actually driving the theme -- auto-detected unless you override them. */
+  /** The commander's colour identity, used to flag off-identity cards. */
   colors: string[];
-  /** What the commander's identity says, before any manual override. */
-  autoColors: string[];
 };
 
 export type GroupMode = "section" | "type";

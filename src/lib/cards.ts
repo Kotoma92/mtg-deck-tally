@@ -78,8 +78,13 @@ export async function lookupCards(names: string[]): Promise<Map<string, CardInfo
   return found;
 }
 
+type ImageVersion = "small" | "normal" | "art_crop";
+
 /** Scryfall serves card images by name, so no image ids need to live in our index. */
-export function cardImageUrl(name: string, version: "small" | "normal" = "normal"): string {
+export function cardImageUrl(name: string, version: ImageVersion = "normal"): string {
   const query = new URLSearchParams({ exact: name, format: "image", version });
   return `https://api.scryfall.com/cards/named?${query}`;
 }
+
+/** Just the illustration, without the frame or text box -- what a banner wants. */
+export const cardArtUrl = (name: string) => cardImageUrl(name, "art_crop");
