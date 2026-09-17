@@ -2,7 +2,7 @@
  * Fetching decks from Moxfield and Archidekt.
  *
  * Neither site sends CORS headers, so the browser cannot call them directly --
- * this module runs server-side, in the Cloudflare Pages Function in production
+ * this module runs server-side, in the Cloudflare Worker in production
  * and in the Vite dev middleware locally, so both behave identically.
  */
 

@@ -54,9 +54,8 @@ git checkout -b <type>/<short-description>
 | `src/lib/buildDeck.ts` | Parsed list + card index -> a `Deck`, including commander detection |
 | `src/lib/decklist.ts` | Parser for pasted text exports |
 | `shared/deck-sources.mjs` | Fetches and normalises Moxfield/Archidekt decks |
-| `functions/api/deck.js` | Cloudflare Pages Function wrapping the above |
-| `vite.config.ts` | Dev middleware serving the same `/api/deck` route from the same module |
-| `src/worker.ts` | Cloudflare Worker handling `/api/deck`, `/cards.db`, and `/api/card-image` |
+| `vite.config.ts` | Dev middleware serving /api/deck, /api/moxfield/decks, and /api/card-image |
+| `src/worker.ts` | Cloudflare Worker handling /api/deck, /api/moxfield/decks, /api/card-image, and /cards.db |
 | `public/sw.js` | Service Worker caching app shell and persistent card images |
 | `scripts/build_db.py` | Builds `public/cards.db` from Scryfall bulk data |
 
@@ -89,8 +88,8 @@ trying more headers. The legitimate route is a whitelisted User-Agent via
 [moxfield/moxfield-public](https://github.com/moxfield/moxfield-public), set in
 `shared/deck-sources.mjs`. Archidekt's API works fine and reports its own
 commander. Paste import always works and is the documented fallback.
-Untested: whether Cloudflare Workers reach Moxfield, since Workers use a
-different network path than Node. Worth checking once deployed.
+Verified: Cloudflare Workers reach Moxfield without issue in production,
+while Node gets 403 in local dev.
 
 **`requestChunkSize` must equal the database's `page_size`.** It is 4096 in
 `src/lib/cards.ts` and 4096 in `scripts/build_db.py`, coupled across two

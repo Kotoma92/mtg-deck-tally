@@ -2,10 +2,10 @@
 
 Check a physical Magic deck against its list, card by card. Click each card as
 you find it in the pile; the page tracks what's left, keeps your progress across
-reloads, and re-themes itself to your commander's colors.
+reloads, and displays your commander's artwork.
 
 Built with React + Vite. Card data comes from a SQLite index of Scryfall's
-oracle data that the browser queries directly.
+oracle data that the browser queries directly over HTTP range requests.
 
 ## Running it
 
@@ -14,58 +14,60 @@ npm install
 npm run dev
 ```
 
-`npm run dev` also serves `/api/deck`, the same deck-import endpoint that runs as
-a Cloudflare Pages Function in production, so link imports work locally.
+`npm run dev` also serves `/api/deck`, `/api/moxfield/decks`, and `/api/card-image` via Vite middleware (matching the Cloudflare Worker in production), so link imports and card images work locally.
 
 ## The card database
 
-`public/cards.db` is a SQLite index of every Magic card (~34,500 rows, 1.9MB):
-name, color identity, type line, mana cost, CMC, and whether the card can be a
-commander. It is committed, so the app works with no setup.
+`public/cards.db` is a SQLite index of every Magic card (~34,500 rows, ~3.3MB):
+name, color identity, type line, mana cost, CMC, commander eligibility, and Scryfall ID. It is committed, so the app works with zero setup.
 
 The browser never downloads the whole file. `sql.js-httpvfs` issues HTTP range
 requests for only the pages a query touches, so identifying a 100-card deck
-moves a few dozen KB.
+moves only a few dozen KB.
 
 Rebuild it when a new set releases:
 
 ```bash
-# Download Scryfall's oracle bulk export (~180MB, cached in data/) and rebuild
-python scripts/build_db.py
+# Refresh and download latest Scryfall bulk export (~180MB) and rebuild
+npm run refresh:db
 
-# Or build from an existing mtg-deck-tune index, skipping the download
-python scripts/build_db.py --from-sqlite ../claude-mtg-deck-tune/data/cards.db
+# Or re-index an existing download without re-downloading
+npm run build:db
+
+# Or build from an existing sqlite database index
+python scripts/build_db.py --from-sqlite <path/to/cards.db>
 ```
 
-Card images are not stored: they're loaded on demand from Scryfall's
-`cards/named` image endpoint, which needs no API key and stays current.
+Card images are loaded via `/api/card-image`, which redirects directly to
+Scryfall's global image CDN using indexed Scryfall IDs with zero rate limits,
+cached persistently in the browser via a Service Worker.
 
 ## Importing decks
 
 | Source | Link import | Notes |
 | --- | --- | --- |
+| Moxfield | Works | Full support for deck links and username deck browsing in production. |
 | Archidekt | Works | Public API, returns the commander directly. |
-| Moxfield | Blocked | See below. |
 | Paste | Always works | Moxfield: ⋯ menu → Export → Text. |
 
-Neither site sends CORS headers, so the browser cannot call them directly. That
-is what `functions/api/deck.js` is for -- it fetches the deck server-side and
-normalises Moxfield's and Archidekt's very different JSON into one shape.
-
-**Moxfield is behind Cloudflare bot protection** that rejects server-side clients
-by TLS fingerprint, not by headers -- no User-Agent gets through. Moxfield link
-imports return a message pointing at paste import instead. If you want them to
-work, request a whitelisted User-Agent via
-[moxfield/moxfield-public](https://github.com/moxfield/moxfield-public) and set
-it in `shared/deck-sources.mjs`.
+Neither site sends CORS headers, so the browser cannot call them directly. A
+Cloudflare Worker (`src/worker.ts`) fetches and normalises decks server-side into
+a unified schema.
 
 ## Deploying
 
-Cloudflare Pages, which serves the static build and the `functions/` directory
-together:
+Hosted on **Cloudflare Workers with Static Assets**:
 
-- Build command: `npm run build`
-- Output directory: `dist`
+- Production: [https://tally.rolandtech.org](https://tally.rolandtech.org)
+- Staging (Beta): [https://beta.tally.rolandtech.org](https://beta.tally.rolandtech.org)
 
-Range requests -- which the card database depends on -- are supported by
-Cloudflare Pages out of the box.
+Configured via `wrangler.json` and deployed automatically via GitHub Actions:
+- Pull requests deploy automatically to **Staging**.
+- Merging to `main` deploys to **Production** (and syncs staging).
+
+To deploy manually:
+
+```bash
+npm run deploy          # Production
+npm run deploy:staging  # Staging
+```

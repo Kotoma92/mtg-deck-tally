@@ -3,14 +3,17 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "build:db": "python scripts/build_db.py",
     "refresh:db": "python scripts/build_db.py --refresh",
-    "deploy": "npm run build && npx wrangler deploy",
-    "deploy:staging": "npm run build && npx wrangler deploy --env staging"
+    "deploy": "npm run build && wrangler deploy",
+    "deploy:staging": "npm run build && wrangler deploy --env staging"
   },
   "dependencies": {
     "react": "^19.0.0",
@@ -23,6 +26,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.7.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "wrangler": "^4.133.0"
   }
 }

@@ -16,7 +16,6 @@ type Props = {
   onSubmitQuery?: () => void;
   onReset: () => void;
   onChangeDeck: () => void;
-  onNew?: () => void;
   onUpdate?: () => void;
   updating?: boolean;
 };
@@ -45,9 +44,8 @@ function RefreshIcon({ spinning, className = "", size = 15 }: { spinning?: boole
 
 export function DeckHeader({
   deck, found, total, query, sortMode, viewMode, updating,
-  onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onChangeDeck, onNew, onUpdate,
+  onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onChangeDeck, onUpdate,
 }: Props) {
-  const handleChangeDeck = onChangeDeck ?? onNew;
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -218,7 +216,7 @@ export function DeckHeader({
                       type="button"
                       onClick={() => {
                         setMenuOpen(false);
-                        handleChangeDeck?.();
+                        onChangeDeck();
                       }}
                     >
                       Change deck
@@ -323,7 +321,7 @@ export function DeckHeader({
             >
               Reset
             </button>
-            <button onClick={handleChangeDeck}>Change deck</button>
+            <button onClick={onChangeDeck}>Change deck</button>
             {onUpdate && deck.url && (
               <button
                 type="button"
