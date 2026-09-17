@@ -117,14 +117,27 @@ export function DeckHeader({
       <div className="deck-hero" ref={heroRef}>
         {art.length > 0 && (
           <div className="header-art" aria-hidden>
-            {art.map((name) => (
-              <img
-                key={name}
-                src={cardArtUrl(name, getCommanderId(name))}
-                alt=""
-                onError={() => markBroken(name)}
-              />
-            ))}
+            <div className="header-art-backdrop">
+              {art.map((name) => (
+                <img
+                  key={`bg-${name}`}
+                  src={cardArtUrl(name, getCommanderId(name))}
+                  alt=""
+                  onError={() => markBroken(name)}
+                />
+              ))}
+            </div>
+            <div className="header-art-spotlight">
+              {art.map((name) => (
+                <img
+                  key={`spot-${name}`}
+                  className="spotlight-img"
+                  src={cardArtUrl(name, getCommanderId(name))}
+                  alt=""
+                  onError={() => markBroken(name)}
+                />
+              ))}
+            </div>
           </div>
         )}
 
