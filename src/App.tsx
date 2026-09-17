@@ -73,10 +73,10 @@ export default function App() {
 
   const { found, total } = useMemo(() => countCards(displayedCards), [displayedCards]);
 
-  const totalMissing = useMemo(() => {
-    if (!deck) return 0;
-    return deck.cards.reduce((acc, c) => acc + Math.max(0, c.qty - c.found), 0);
-  }, [deck]);
+  const activeMissing = useMemo(
+    () => displayedCards.reduce((acc, c) => acc + Math.max(0, c.qty - c.found), 0),
+    [displayedCards],
+  );
   // Ensure all cards have scryfallId before rendering to avoid rate‑limited name lookups.
   // Keyed on deck.name so this only re-runs when a *different* deck is loaded, not on every card mark.
   const [ready, setReady] = useState<boolean>(() => {
@@ -300,7 +300,7 @@ export default function App() {
         onViewMode={handleViewModeChange}
         onBoardChange={setActiveBoard}
         onOpenShoppingList={() => setShoppingListOpen(true)}
-        missingCount={totalMissing}
+        missingCount={activeMissing}
         onSubmitQuery={submitQuery}
         onReset={() => setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) })}
         onChangeDeck={() => {
@@ -324,6 +324,7 @@ export default function App() {
         deckName={deck.name}
         isOpen={shoppingListOpen}
         onClose={() => setShoppingListOpen(false)}
+        activeBoard={activeBoard}
       />
     </div>
   );

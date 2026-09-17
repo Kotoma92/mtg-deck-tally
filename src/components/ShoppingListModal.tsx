@@ -1,19 +1,42 @@
 import { useEffect, useMemo, useState } from "react";
 import { boardOfSection } from "../lib/grouping";
-import type { DeckCard } from "../lib/types";
+import type { BoardType, DeckCard } from "../lib/types";
 
 type Props = {
   cards: DeckCard[];
   deckName?: string;
   isOpen: boolean;
   onClose: () => void;
+  activeBoard?: BoardType;
 };
 
-export function ShoppingListModal({ cards, deckName, isOpen, onClose }: Props) {
-  const [includeMain, setIncludeMain] = useState(true);
-  const [includeSideboard, setIncludeSideboard] = useState(true);
-  const [includeConsidering, setIncludeConsidering] = useState(false);
+export function ShoppingListModal({ cards, deckName, isOpen, onClose, activeBoard = "main" }: Props) {
+  const [includeMain, setIncludeMain] = useState(() => activeBoard !== "considering" && activeBoard !== "sideboard");
+  const [includeSideboard, setIncludeSideboard] = useState(() => activeBoard === "sideboard" || activeBoard === "all");
+  const [includeConsidering, setIncludeConsidering] = useState(() => activeBoard === "considering" || activeBoard === "all");
   const [copied, setCopied] = useState(false);
+
+  // Sync checkboxes whenever modal opens or active board changes
+  useEffect(() => {
+    if (!isOpen) return;
+    if (activeBoard === "considering") {
+      setIncludeMain(false);
+      setIncludeSideboard(false);
+      setIncludeConsidering(true);
+    } else if (activeBoard === "sideboard") {
+      setIncludeMain(false);
+      setIncludeSideboard(true);
+      setIncludeConsidering(false);
+    } else if (activeBoard === "all") {
+      setIncludeMain(true);
+      setIncludeSideboard(true);
+      setIncludeConsidering(true);
+    } else {
+      setIncludeMain(true);
+      setIncludeSideboard(false);
+      setIncludeConsidering(false);
+    }
+  }, [isOpen, activeBoard]);
 
   // Close on Escape
   useEffect(() => {
