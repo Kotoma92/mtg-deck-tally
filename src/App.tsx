@@ -93,6 +93,20 @@ export default function App() {
   }, [deck?.name]);
 
   const { found, total } = useMemo(() => countCards(deck?.cards ?? []), [deck]);
+  const [updating, setUpdating] = useState(false);
+
+  async function handleUpdateDeck() {
+    if (!deck?.url || updating) return;
+    setUpdating(true);
+    try {
+      const refreshed = await buildDeckFromUrl(deck.url, deck, true);
+      setDeck(refreshed);
+    } catch (err: any) {
+      alert(err?.message || "Could not update deck. Check your connection and try again.");
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   async function load(build: () => Promise<Deck>) {
     setBusy(true);
@@ -231,6 +245,8 @@ export default function App() {
           setDeck(null);
           setImporting(true);
         }}
+        onUpdate={handleUpdateDeck}
+        updating={updating}
       />
       <main>
         <CardList deck={deck} sortMode={sortMode} viewMode={viewMode} query={query} onMark={markCard} />

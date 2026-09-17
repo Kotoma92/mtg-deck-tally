@@ -17,11 +17,13 @@ type Props = {
   onReset: () => void;
   onEdit: () => void;
   onNew: () => void;
+  onUpdate?: () => void;
+  updating?: boolean;
 };
 
 export function DeckHeader({
-  deck, found, total, query, sortMode, viewMode,
-  onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onEdit, onNew,
+  deck, found, total, query, sortMode, viewMode, updating,
+  onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onEdit, onNew, onUpdate,
 }: Props) {
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
@@ -178,6 +180,18 @@ export function DeckHeader({
                 </button>
                 {menuOpen && (
                   <div className="header-menu-dropdown">
+                    {onUpdate && deck.url && (
+                      <button
+                        type="button"
+                        disabled={updating}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          onUpdate();
+                        }}
+                      >
+                        {updating ? "Updating deck…" : "Update deck"}
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => {
@@ -285,6 +299,16 @@ export function DeckHeader({
             </button>
           </div>
           <div className="header-action-btns">
+            {onUpdate && deck.url && (
+              <button
+                type="button"
+                disabled={updating}
+                onClick={onUpdate}
+                title="Fetch latest cards and printings from Moxfield/Archidekt"
+              >
+                {updating ? "Updating…" : "Update deck"}
+              </button>
+            )}
             <button
               onClick={() => {
                 if (found === 0 || window.confirm("Reset all checkmarks?")) {

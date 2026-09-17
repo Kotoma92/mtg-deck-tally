@@ -25,12 +25,16 @@ export async function buildDeck(input: BuildInput, previous?: Deck | null): Prom
   const index = await lookupCards(input.cards.map((card) => card.name));
 
   // Carry checked-off progress across an edit, so fixing a typo doesn't reset you.
-  const priorProgress = new Map(
-    (previous?.cards ?? []).map((card) => [
-      `${card.name.toLowerCase()}::${card.info?.scryfallId ?? ""}`,
-      card.found,
-    ]),
-  );
+  // Store both the exact printing key and fallback card name so changing printings in Moxfield preserves checkmarks!
+  const priorProgress = new Map<string, number>();
+  for (const card of previous?.cards ?? []) {
+    if (card.info?.scryfallId) {
+      priorProgress.set(`${card.name.toLowerCase()}::${card.info.scryfallId}`, card.found);
+    }
+    if (!priorProgress.has(card.name.toLowerCase())) {
+      priorProgress.set(card.name.toLowerCase(), card.found);
+    }
+  }
 
   const cards: DeckCard[] = input.cards.map((card) => {
     const baseInfo = index.get(card.name.toLowerCase());
@@ -185,8 +189,15 @@ type ImportedDeck = {
   error?: string;
 };
 
-export async function buildDeckFromUrl(url: string, previous?: Deck | null): Promise<Deck> {
-  const response = await fetch(`/api/deck?url=${encodeURIComponent(url)}`);
+export async function buildDeckFromUrl(
+  url: string,
+  previous?: Deck | null,
+  refresh = false,
+): Promise<Deck> {
+  const queryUrl = `/api/deck?url=${encodeURIComponent(url)}${refresh ? `&refresh=1&_t=${Date.now()}` : ""}`;
+  const response = await fetch(queryUrl, {
+    cache: refresh ? "no-cache" : "default",
+  });
   const payload = (await response.json()) as ImportedDeck;
   if (!response.ok) throw new Error(payload.error ?? "Couldn't load that deck.");
 
