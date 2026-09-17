@@ -176,11 +176,6 @@ export function finalizeDeck(
   };
 }
 
-export async function buildDeckFromText(text: string, previous?: Deck | null): Promise<Deck> {
-  const prepared = await prepareDeckFromText(text, previous);
-  return finalizeDeck(prepared, prepared.suggestedCommanders);
-}
-
 type ImportedDeck = {
   source: DeckSource;
   name?: string;

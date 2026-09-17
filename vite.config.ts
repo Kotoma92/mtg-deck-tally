@@ -14,9 +14,9 @@ function getCardsDbVersion(): string {
 }
 
 /**
- * In production /api/deck is a Cloudflare Pages Function. This serves the same
- * route from the same module during `npm run dev`, so link imports work locally
- * without running wrangler.
+ * In production /api/deck, /api/moxfield/decks, and /api/card-image are handled
+ * by the Cloudflare Worker (src/worker.ts). This serves the same routes during
+ * `npm run dev`, so link imports and card images work locally without running wrangler.
  */
 function deckApiDevServer(): Plugin {
   return {
@@ -39,6 +39,49 @@ function deckApiDevServer(): Plugin {
           send(await fetchDeck(target), 200, cacheControl);
         } catch (err: any) {
           send({ error: err?.message ?? "Upstream request failed." }, err?.status === 404 ? 404 : 502);
+        }
+      });
+
+      server.middlewares.use("/api/moxfield/decks", async (req, res) => {
+        const send = (body: unknown, status = 200) => {
+          res.statusCode = status;
+          res.setHeader("content-type", "application/json; charset=utf-8");
+          res.end(JSON.stringify(body));
+        };
+        const url = new URL(req.url ?? "", "http://localhost");
+        const username = url.searchParams.get("username")?.trim();
+        if (!username) return send({ error: "Missing username parameter." }, 400);
+
+        const page = url.searchParams.get("page") || "1";
+        const pageSize = url.searchParams.get("pageSize") || "40";
+        const moxUrl = `https://api2.moxfield.com/v2/decks/search?authorUserNames=${encodeURIComponent(username)}&pageNumber=${page}&pageSize=${pageSize}&sortType=updated&sortDirection=descending`;
+
+        try {
+          const response = await fetch(moxUrl, {
+            headers: {
+              "User-Agent": "MTGDeckTally/1.0 (+https://github.com/Kotoma92/mtg-deck-tally)",
+              "Accept": "application/json",
+            },
+          });
+          if (!response.ok) {
+            if (response.status === 404) {
+              return send({ error: `Could not find Moxfield user "${username}". Check the spelling.` }, 404);
+            }
+            if (response.status === 403) {
+              return send(
+                {
+                  error:
+                    "Moxfield blocks Node.js requests in local dev (HTTP 403). Test on staging/production where Cloudflare Workers can reach Moxfield.",
+                },
+                403,
+              );
+            }
+            return send({ error: `Moxfield responded with HTTP ${response.status}.` }, response.status);
+          }
+          const data = await response.json();
+          send(data);
+        } catch (err: any) {
+          send({ error: err?.message ?? "Upstream request failed." }, 502);
         }
       });
 

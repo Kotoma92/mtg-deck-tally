@@ -176,7 +176,7 @@ export default function App() {
 
   if (importing || !deck) {
     return (
-      <div className="wrap layout-auto">
+      <div className="wrap">
         <header className="bare-header">
           <h1>Deck Tally</h1>
           <p className="tagline">Check a physical deck against its list, card by card.</p>
@@ -219,14 +219,14 @@ export default function App() {
   // Wait for ID enrichment before showing card images to avoid rate‑limited name lookups.
   if (!ready) {
     return (
-      <div className="wrap layout-auto">
+      <div className="wrap">
         <p style={{ padding: "2rem", textAlign: "center", opacity: 0.5 }}>Loading deck…</p>
       </div>
     );
   }
 
   return (
-    <div className="wrap layout-auto">
+    <div className="wrap">
       <DeckHeader
         deck={deck}
         found={found}
