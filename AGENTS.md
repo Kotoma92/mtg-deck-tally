@@ -23,11 +23,30 @@ npm run build    # tsc --noEmit && vite build
 | `shared/deck-sources.mjs` | Fetches and normalises Moxfield/Archidekt decks |
 | `functions/api/deck.js` | Cloudflare Pages Function wrapping the above |
 | `vite.config.ts` | Dev middleware serving the same `/api/deck` route from the same module |
+| `src/worker.ts` | Cloudflare Worker handling `/api/deck`, `/cards.db`, and `/api/card-image` |
+| `public/sw.js` | Service Worker caching app shell and persistent card images |
 | `scripts/build_db.py` | Builds `public/cards.db` from Scryfall bulk data |
 
 ## Traps
 
 These cost real time to rediscover. Please read before changing the related code.
+
+**Do not fetch card images directly from `api.scryfall.com` in client `<img>` tags.**
+When loading a 99-card deck, firing 99 simultaneous client requests to
+`api.scryfall.com/cards/named` triggers HTTP 429 rate limiting, leading to blank
+cards on mobile. Cross-origin `<img>` requests also return `opaque` responses that
+bypass standard service worker caches. All card images must route through the
+`/api/card-image` endpoint in `src/worker.ts` (and `vite.config.ts`), which caches
+responses at Cloudflare's edge for 30 days and allows `public/sw.js` to store them
+persistently in the `mtg-deck-tally-images-v1` CacheStorage. Double-faced cards
+(MDFCs) must fall back to the front-face name (`name.split(" // ")[0]`) on 404.
+
+**Visual stacked views must use column-based stacks, not row-based CSS grid margins.**
+Attempting to flatten stacked cards into a single CSS Grid with negative `margin-top`
+couples every item in the row to the row's tallest track. If JS and CSS column counts
+diverge by even 1 column (common on mobile with body padding), cards misalign and
+create massive vertical gaps. Always use `.visual-stack` flex columns with round-robin
+card distribution (`columns[i % columnCount]`).
 
 **Moxfield blocks server-side clients by TLS fingerprint, not by headers.**
 Requests from Node get a Cloudflare 403 HTML challenge no matter what
