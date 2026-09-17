@@ -82,21 +82,18 @@ export default {
         if (cached) return cached;
       }
 
-      // 1. Direct fetch from Scryfall CDN if Scryfall ID is available (NO 10 req/s rate limits!)
-      const fetchCdn = async (cardId: string) => {
-        // cards.scryfall.io/{version}/front/{id[0]}/{id[1]}/{id}.jpg
-        const cdnUrl = `https://cards.scryfall.io/${version}/front/${cardId[0]}/${cardId[1]}/${cardId}.jpg`;
-        return fetch(cdnUrl, {
+      // 1. Direct redirect to Scryfall CDN if Scryfall ID is available (no proxying, full CDN speed)
+      if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        const cdnUrl = `https://cards.scryfall.io/${version}/front/${id[0]}/${id[1]}/${id}.jpg`;
+        return new Response(null, {
+          status: 302,
           headers: {
-            "User-Agent": "MTGDeckTally/1.0 (+https://github.com/Kotoma92/mtg-deck-tally)",
-            "Accept": "image/*",
+            "Location": cdnUrl,
+            "Cache-Control": "public, max-age=2592000, immutable",
+            "Access-Control-Allow-Origin": "*",
           },
-          cf: {
-            cacheTtl: 2592000,
-            cacheEverything: true,
-          },
-        } as any);
-      };
+        });
+      }
 
       // 2. Fallback search by exact name if id is missing or 404
       const fetchScryfallByName = async (exactName: string) => {
@@ -113,21 +110,17 @@ export default {
         } as any);
       };
 
+      // Name-only fallback: look up via Scryfall API (rate-limited to 10 req/s, last resort)
+      if (!name) return new Response("Missing card id or name", { status: 400 });
+
       try {
-        let scryfallRes: Response | null = null;
-        if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-          scryfallRes = await fetchCdn(id);
+        let scryfallRes = await fetchScryfallByName(name);
+        if (!scryfallRes.ok && name.includes(" // ")) {
+          scryfallRes = await fetchScryfallByName(name.split(" // ")[0]);
         }
 
-        if ((!scryfallRes || !scryfallRes.ok) && name) {
-          scryfallRes = await fetchScryfallByName(name);
-          if (!scryfallRes.ok && name.includes(" // ")) {
-            scryfallRes = await fetchScryfallByName(name.split(" // ")[0]);
-          }
-        }
-
-        if (!scryfallRes || !scryfallRes.ok) {
-          return new Response("Card image not found", { status: scryfallRes ? scryfallRes.status : 404 });
+        if (!scryfallRes.ok) {
+          return new Response("Card image not found", { status: scryfallRes.status });
         }
 
         const headers = new Headers(scryfallRes.headers);
