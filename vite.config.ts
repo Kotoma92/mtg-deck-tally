@@ -40,14 +40,25 @@ function deckApiDevServer(): Plugin {
 
       server.middlewares.use("/api/card-image", async (req, res) => {
         const url = new URL(req.url ?? "", "http://localhost");
+        const id = url.searchParams.get("id")?.trim();
         const name = url.searchParams.get("name")?.trim();
         const version = url.searchParams.get("version") || "normal";
-        if (!name) {
+        if (!id && !name) {
           res.statusCode = 400;
-          return res.end("Missing card name");
+          return res.end("Missing card id or name");
         }
 
-        const fetchScryfall = async (exactName: string) => {
+        const fetchCdn = async (cardId: string) => {
+          const cdnUrl = `https://cards.scryfall.io/${version}/front/${cardId[0]}/${cardId[1]}/${cardId}.jpg`;
+          return fetch(cdnUrl, {
+            headers: {
+              "User-Agent": "MTGDeckTally/1.0 (+https://github.com/Kotoma92/mtg-deck-tally)",
+              "Accept": "image/*",
+            },
+          });
+        };
+
+        const fetchScryfallByName = async (exactName: string) => {
           const scryfallUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(exactName)}&format=image&version=${version}`;
           return fetch(scryfallUrl, {
             headers: {
@@ -58,13 +69,20 @@ function deckApiDevServer(): Plugin {
         };
 
         try {
-          let upstream = await fetchScryfall(name);
-          if (!upstream.ok && name.includes(" // ")) {
-            upstream = await fetchScryfall(name.split(" // ")[0]);
+          let upstream: Response | null = null;
+          if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+            upstream = await fetchCdn(id);
           }
 
-          if (!upstream.ok) {
-            res.statusCode = upstream.status;
+          if ((!upstream || !upstream.ok) && name) {
+            upstream = await fetchScryfallByName(name);
+            if (!upstream.ok && name.includes(" // ")) {
+              upstream = await fetchScryfallByName(name.split(" // ")[0]);
+            }
+          }
+
+          if (!upstream || !upstream.ok) {
+            res.statusCode = upstream ? upstream.status : 404;
             return res.end("Image fetch failed");
           }
 

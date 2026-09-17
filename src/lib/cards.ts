@@ -36,6 +36,7 @@ type Row = {
   mana_cost: string | null;
   cmc: number | null;
   can_be_commander: number;
+  scryfall_id: string | null;
 };
 
 const toCardInfo = (row: Row): CardInfo => ({
@@ -45,9 +46,10 @@ const toCardInfo = (row: Row): CardInfo => ({
   manaCost: row.mana_cost ?? "",
   cmc: row.cmc ?? 0,
   canBeCommander: row.can_be_commander === 1,
+  scryfallId: row.scryfall_id ?? undefined,
 });
 
-const SELECT = "select name, color_identity, type_line, mana_cost, cmc, can_be_commander from cards";
+const SELECT = "select name, color_identity, type_line, mana_cost, cmc, can_be_commander, scryfall_id from cards";
 
 /**
  * Look up many cards at once, keyed by lowercased name. The name column is
@@ -80,11 +82,18 @@ export async function lookupCards(names: string[]): Promise<Map<string, CardInfo
 
 type ImageVersion = "small" | "normal" | "art_crop";
 
-/** Proxied & edge-cached card images by name. */
-export function cardImageUrl(name: string, version: ImageVersion = "normal"): string {
-  const query = new URLSearchParams({ name, version });
+/** Proxied & edge-cached card images by scryfallId (direct CDN) or name (fallback). */
+export function cardImageUrl(name: string, version: ImageVersion = "normal", scryfallId?: string): string {
+  const params: Record<string, string> = { version };
+  if (scryfallId) {
+    params.id = scryfallId;
+  }
+  if (name) {
+    params.name = name;
+  }
+  const query = new URLSearchParams(params);
   return `/api/card-image?${query}`;
 }
 
 /** Just the illustration, without the frame or text box -- what a banner wants. */
-export const cardArtUrl = (name: string) => cardImageUrl(name, "art_crop");
+export const cardArtUrl = (name: string, scryfallId?: string) => cardImageUrl(name, "art_crop", scryfallId);

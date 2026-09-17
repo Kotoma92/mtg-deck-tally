@@ -116,6 +116,7 @@ def rows_from_bulk(refresh: bool = False):
                 face_value(card, "mana_cost"),
                 card.get("cmc", 0) or 0,
                 commander_eligible(type_line, oracle_text),
+                card.get("id", ""),
             )
     finally:
         fh.close()
@@ -125,8 +126,12 @@ def rows_from_sqlite(path: str):
     if not os.path.exists(path):
         sys.exit(f"no such database: {path}")
     con = sqlite3.connect(path)
-    query = "select name, color_identity, type_line, mana_cost, cmc, oracle_text from cards"
-    for name, identity, type_line, mana_cost, cmc, oracle_text in con.execute(query):
+    columns = [col[1] for col in con.execute("PRAGMA table_info(cards)")]
+    has_id = "scryfall_id" in columns
+    query = f"select name, color_identity, type_line, mana_cost, cmc, oracle_text{', scryfall_id' if has_id else ''} from cards"
+    for row in con.execute(query):
+        name, identity, type_line, mana_cost, cmc, oracle_text = row[:6]
+        scryfall_id = row[6] if has_id else ""
         yield (
             name,
             canonical_identity(identity),
@@ -134,6 +139,7 @@ def rows_from_sqlite(path: str):
             mana_cost or "",
             cmc or 0,
             commander_eligible(type_line, oracle_text),
+            scryfall_id,
         )
     con.close()
 
@@ -151,9 +157,10 @@ def build(rows) -> None:
         type_line TEXT NOT NULL,
         mana_cost TEXT,
         cmc REAL,
-        can_be_commander INTEGER NOT NULL
+        can_be_commander INTEGER NOT NULL,
+        scryfall_id TEXT
     ) WITHOUT ROWID""")
-    con.executemany("INSERT OR REPLACE INTO cards VALUES (?,?,?,?,?,?)", rows)
+    con.executemany("INSERT OR REPLACE INTO cards VALUES (?,?,?,?,?,?,?)", rows)
     con.commit()
     total = con.execute("select count(*) from cards").fetchone()[0]
     commanders = con.execute("select count(*) from cards where can_be_commander = 1").fetchone()[0]

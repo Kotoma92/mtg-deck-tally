@@ -16,7 +16,7 @@ export function VisualCard({ card, stacked, illegal, done, onMark, onUndo }: Pro
   const [imgError, setImgError] = useState(false);
   const isDone = done ?? card.found >= card.qty;
 
-  const imgSrc = `${cardImageUrl(card.name, "normal")}${retries > 0 ? `&r=${retries}` : ""}`;
+  const imgSrc = `${cardImageUrl(card.name, "normal", card.info?.scryfallId)}${retries > 0 ? `&r=${retries}` : ""}`;
 
   return (
     <div

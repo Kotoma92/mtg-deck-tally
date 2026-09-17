@@ -64,15 +64,15 @@ git checkout -b <type>/<short-description>
 
 These cost real time to rediscover. Please read before changing the related code.
 
-**Do not fetch card images directly from `api.scryfall.com` in client `<img>` tags.**
-When loading a 99-card deck, firing 99 simultaneous client requests to
-`api.scryfall.com/cards/named` triggers HTTP 429 rate limiting, leading to blank
-cards on mobile. Cross-origin `<img>` requests also return `opaque` responses that
-bypass standard service worker caches. All card images must route through the
-`/api/card-image` endpoint in `src/worker.ts` (and `vite.config.ts`), which caches
-responses at Cloudflare's edge for 30 days and allows `public/sw.js` to store them
-persistently in the `mtg-deck-tally-images-v1` CacheStorage. Double-faced cards
-(MDFCs) must fall back to the front-face name (`name.split(" // ")[0]`) on 404.
+**Fetch card images directly from Scryfall CDN via `scryfall_id` through `/api/card-image`.**
+`api.scryfall.com/cards/named` has a strict rate limit of 10 req/s, which causes HTTP 429
+throttling when 100 cards are requested simultaneously. In contrast, Scryfall's image CDN
+at `https://cards.scryfall.io/{version}/front/{id[0]}/{id[1]}/{id}.jpg` is a global Cloudflare
+CDN with zero 10 req/s rate limits. `public/cards.db` indexes `scryfall_id` so the client can
+pass `id` directly to `/api/card-image?id=<scryfall_id>&version=<version>`. The worker fetches
+from `cards.scryfall.io` directly (with name-based search fallback), caches at Cloudflare's
+edge for 30 days, and allows `public/sw.js` to store them persistently in CacheStorage. Double-faced
+cards (MDFCs) fall back to front face on 404.
 
 **Visual stacked views must use column-based stacks, not row-based CSS grid margins.**
 Attempting to flatten stacked cards into a single CSS Grid with negative `margin-top`
