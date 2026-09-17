@@ -13,45 +13,45 @@ type Props = {
   onMark: (name: string, delta: number) => void;
 };
 
-function useGridColumnCount() {
-  const measureRef = useRef<HTMLDivElement>(null);
-  const [cols, setCols] = useState(() => {
-    if (typeof window === "undefined") return 4;
-    const w = Math.min(1560, window.innerWidth) - 32;
-    if (w <= 360) return 2;
-    if (w <= 600) return Math.max(1, Math.floor((w + 8) / (130 + 8)));
-    return Math.max(1, Math.floor((w + 14) / (175 + 14)));
-  });
+function getGridColumnCount(width: number): number {
+  if (width <= 340) return 1;
+  if (width <= 600) return 2;
+  return Math.max(1, Math.floor((width + 14) / 189));
+}
 
-  useLayoutEffect(() => {
-    const el = measureRef.current;
-    if (!el) return;
-
-    const measure = () => {
-      const comp = window.getComputedStyle(el).gridTemplateColumns;
-      if (comp) {
-        const count = comp.split(" ").filter(Boolean).length;
-        if (count > 0) setCols(count);
-      }
-    };
-
-    measure();
-
-    const observer = new ResizeObserver(() => {
-      measure();
-    });
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return { measureRef, cols };
+function distributeCards<T>(cards: T[], columnCount: number): T[][] {
+  const count = Math.min(columnCount, cards.length);
+  if (count <= 0) return [];
+  const columns: T[][] = Array.from({ length: count }, () => []);
+  for (let i = 0; i < cards.length; i++) {
+    columns[i % count].push(cards[i]);
+  }
+  return columns;
 }
 
 export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
   const needle = query.trim().toLowerCase();
   const groups = groupCards(deck.cards, sortMode);
-  const { measureRef, cols } = useGridColumnCount();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [columnCount, setColumnCount] = useState(() => {
+    if (typeof window === "undefined") return 2;
+    const w = Math.min(1560, window.innerWidth) - 40;
+    return getGridColumnCount(w);
+  });
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const update = () => {
+      setColumnCount(getGridColumnCount(el.clientWidth));
+    };
+
+    update();
+    const observer = new ResizeObserver(() => update());
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const visibleGroups = groups
     .map((group) => {
@@ -91,18 +91,23 @@ export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
     }
 
     if (viewMode === "stacked") {
+      const piles = distributeCards(cards, columnCount);
       return (
         <div className="visual-stacked-grid">
-          {cards.map((card, idx) => (
-            <VisualCard
-              key={card.name}
-              card={card}
-              stacked={idx >= cols}
-              done={isDone}
-              illegal={!isDone && !!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
-              onMark={() => onMark(card.name, isDone ? -card.qty : 1)}
-              onUndo={() => onMark(card.name, isDone ? -card.qty : -1)}
-            />
+          {piles.map((pile, pileIdx) => (
+            <div className="visual-stack" key={pileIdx}>
+              {pile.map((card, cardIdx) => (
+                <VisualCard
+                  key={card.name}
+                  card={card}
+                  stacked={cardIdx > 0}
+                  done={isDone}
+                  illegal={!isDone && !!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
+                  onMark={() => onMark(card.name, isDone ? -card.qty : 1)}
+                  onUndo={() => onMark(card.name, isDone ? -card.qty : -1)}
+                />
+              ))}
+            </div>
           ))}
         </div>
       );
@@ -126,23 +131,7 @@ export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
   }
 
   return (
-    <>
-      <div
-        ref={measureRef}
-        className="visual-stacked-grid"
-        style={{
-          visibility: "hidden",
-          position: "absolute",
-          pointerEvents: "none",
-          width: "100%",
-          height: 0,
-          overflow: "hidden",
-          margin: 0,
-          padding: 0,
-          border: "none",
-        }}
-        aria-hidden
-      />
+    <div className="card-list-root" ref={containerRef}>
       {visibleGroups.map((group) => {
         const { found, total } = countCards(group.cards);
         return (
@@ -167,6 +156,6 @@ export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
           </section>
         );
       })}
-    </>
+    </div>
   );
 }

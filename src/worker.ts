@@ -66,6 +66,63 @@ export default {
       }
     }
 
+    // API Route for proxying and edge-caching Scryfall card images
+    if (url.pathname === "/api/card-image") {
+      const name = url.searchParams.get("name")?.trim();
+      const version = url.searchParams.get("version") || "normal";
+      if (!name) return new Response("Missing card name", { status: 400 });
+
+      // Check Cloudflare Edge Cache
+      // @ts-ignore
+      const cache = typeof caches !== "undefined" && caches.default ? caches.default : null;
+      const cacheKey = new Request(url.toString(), { method: "GET" });
+      if (cache) {
+        const cached = await cache.match(cacheKey);
+        if (cached) return cached;
+      }
+
+      const fetchScryfall = async (exactName: string) => {
+        const scryfallUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(exactName)}&format=image&version=${version}`;
+        return fetch(scryfallUrl, {
+          headers: {
+            "User-Agent": "MTGDeckTally/1.0 (+https://github.com/Kotoma92/mtg-deck-tally)",
+            "Accept": "image/*",
+          },
+          cf: {
+            cacheTtl: 2592000,
+            cacheEverything: true,
+          },
+        } as any);
+      };
+
+      try {
+        let scryfallRes = await fetchScryfall(name);
+        if (!scryfallRes.ok && name.includes(" // ")) {
+          scryfallRes = await fetchScryfall(name.split(" // ")[0]);
+        }
+
+        if (!scryfallRes.ok) {
+          return new Response("Card image not found", { status: scryfallRes.status });
+        }
+
+        const headers = new Headers(scryfallRes.headers);
+        headers.set("Cache-Control", "public, max-age=2592000, immutable");
+        headers.set("Access-Control-Allow-Origin", "*");
+
+        const response = new Response(scryfallRes.body, {
+          status: 200,
+          headers,
+        });
+
+        if (cache) {
+          await cache.put(cacheKey, response.clone());
+        }
+        return response;
+      } catch (err: any) {
+        return new Response(err.message, { status: 502 });
+      }
+    }
+
     // For cards.db, ensure byte-range and content headers are preserved
     if (url.pathname === "/cards.db") {
       const assetResponse = await env.ASSETS.fetch(new Request(request.url, { method: "GET" }));

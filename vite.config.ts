@@ -37,6 +37,47 @@ function deckApiDevServer(): Plugin {
           send({ error: err?.message ?? "Upstream request failed." }, err?.status === 404 ? 404 : 502);
         }
       });
+
+      server.middlewares.use("/api/card-image", async (req, res) => {
+        const url = new URL(req.url ?? "", "http://localhost");
+        const name = url.searchParams.get("name")?.trim();
+        const version = url.searchParams.get("version") || "normal";
+        if (!name) {
+          res.statusCode = 400;
+          return res.end("Missing card name");
+        }
+
+        const fetchScryfall = async (exactName: string) => {
+          const scryfallUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(exactName)}&format=image&version=${version}`;
+          return fetch(scryfallUrl, {
+            headers: {
+              "User-Agent": "MTGDeckTally/1.0 (+https://github.com/Kotoma92/mtg-deck-tally)",
+              "Accept": "image/*",
+            },
+          });
+        };
+
+        try {
+          let upstream = await fetchScryfall(name);
+          if (!upstream.ok && name.includes(" // ")) {
+            upstream = await fetchScryfall(name.split(" // ")[0]);
+          }
+
+          if (!upstream.ok) {
+            res.statusCode = upstream.status;
+            return res.end("Image fetch failed");
+          }
+
+          res.statusCode = 200;
+          res.setHeader("content-type", upstream.headers.get("content-type") || "image/jpeg");
+          res.setHeader("cache-control", "public, max-age=2592000, immutable");
+          const arrayBuffer = await upstream.arrayBuffer();
+          res.end(Buffer.from(arrayBuffer));
+        } catch (err: any) {
+          res.statusCode = 502;
+          res.end(err?.message || "Upstream error");
+        }
+      });
     },
   };
 }

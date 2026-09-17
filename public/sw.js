@@ -26,7 +26,9 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys
+          .filter((key) => key !== CACHE_NAME && key !== "mtg-deck-tally-images-v1")
+          .map((key) => caches.delete(key))
       );
     }).then(() => self.clients.claim())
   );
@@ -40,7 +42,28 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first for API requests
+  // Card images: cache-first with persistent cache storage
+  if (url.pathname === "/api/card-image" || url.hostname.includes("scryfall")) {
+    event.respondWith(
+      caches.open("mtg-deck-tally-images-v1").then(async (cache) => {
+        const cached = await cache.match(event.request);
+        if (cached) return cached;
+
+        try {
+          const response = await fetch(event.request);
+          if (response && (response.status === 200 || response.type === "opaque")) {
+            cache.put(event.request, response.clone());
+          }
+          return response;
+        } catch (err) {
+          return new Response("", { status: 504, statusText: "Offline" });
+        }
+      })
+    );
+    return;
+  }
+
+  // Network-first for other API requests
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(
       fetch(event.request).catch(() => {

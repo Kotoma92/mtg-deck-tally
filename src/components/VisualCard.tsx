@@ -12,8 +12,11 @@ type Props = {
 };
 
 export function VisualCard({ card, stacked, illegal, done, onMark, onUndo }: Props) {
+  const [retries, setRetries] = useState(0);
   const [imgError, setImgError] = useState(false);
   const isDone = done ?? card.found >= card.qty;
+
+  const imgSrc = `${cardImageUrl(card.name, "normal")}${retries > 0 ? `&r=${retries}` : ""}`;
 
   return (
     <div
@@ -33,15 +36,25 @@ export function VisualCard({ card, stacked, illegal, done, onMark, onUndo }: Pro
       <div className="visual-card-frame">
         {imgError ? (
           <div className="visual-card-fallback">
-            <span className="fallback-name">{card.name}</span>
+            <div className="fallback-top">
+              <span className="fallback-name">{card.name}</span>
+              {card.info?.manaCost && <span className="fallback-mana mono">{card.info.manaCost}</span>}
+            </div>
             {card.info?.typeLine && <span className="fallback-type">{card.info.typeLine}</span>}
           </div>
         ) : (
           <img
-            src={cardImageUrl(card.name, "normal")}
+            key={retries}
+            src={imgSrc}
             alt={card.name}
             loading="lazy"
-            onError={() => setImgError(true)}
+            onError={() => {
+              if (retries < 2) {
+                setTimeout(() => setRetries((r) => r + 1), 1000 * (retries + 1));
+              } else {
+                setImgError(true);
+              }
+            }}
           />
         )}
 
