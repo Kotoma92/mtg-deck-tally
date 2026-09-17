@@ -23,6 +23,8 @@ type Props = {
   onChangeDeck: () => void;
   onUpdate?: () => void;
   updating?: boolean;
+  onUndo?: () => void;
+  canUndo?: boolean;
 };
 
 function RefreshIcon({ spinning, className = "", size = 15 }: { spinning?: boolean; className?: string; size?: number }) {
@@ -50,7 +52,7 @@ function RefreshIcon({ spinning, className = "", size = 15 }: { spinning?: boole
 export function DeckHeader({
   deck, found, total, query, sortMode, viewMode, activeBoard, updating,
   onQuery, onSortMode, onViewMode, onBoardChange, onOpenShoppingList, missingCount,
-  onSubmitQuery, onReset, onChangeDeck, onUpdate,
+  onSubmitQuery, onReset, onChangeDeck, onUpdate, onUndo, canUndo,
 }: Props) {
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
@@ -179,6 +181,7 @@ export function DeckHeader({
 
           <div className="hero-search-row">
             <input
+              id="card-search-input"
               type="search"
               className="search-input"
               value={query}
@@ -187,9 +190,13 @@ export function DeckHeader({
                 if (event.key === "Enter" && onSubmitQuery) {
                   event.preventDefault();
                   onSubmitQuery();
+                } else if (event.key === "Escape") {
+                  event.preventDefault();
+                  onQuery("");
+                  event.currentTarget.blur();
                 }
               }}
-              placeholder="Jump to a card… (Enter to check)"
+              placeholder="Jump to a card… (Ctrl+F / Enter to check)"
               autoComplete="off"
             />
           </div>
@@ -231,6 +238,17 @@ export function DeckHeader({
                 </button>
                 {menuOpen && (
                   <div className="header-menu-dropdown">
+                    {canUndo && onUndo && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          onUndo();
+                        }}
+                      >
+                        Undo last mark (Ctrl+Z)
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => {
@@ -331,17 +349,21 @@ export function DeckHeader({
             <input
               type="search"
               className="search-input desktop-search-input"
-            value={query}
-            onChange={(event) => onQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && onSubmitQuery) {
-                event.preventDefault();
-                onSubmitQuery();
-              }
-            }}
-            placeholder="Jump to a card… (Enter to check)"
-            autoComplete="off"
-          />
+              value={query}
+              onChange={(event) => onQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && onSubmitQuery) {
+                  event.preventDefault();
+                  onSubmitQuery();
+                } else if (event.key === "Escape") {
+                  event.preventDefault();
+                  onQuery("");
+                  event.currentTarget.blur();
+                }
+              }}
+              placeholder="Jump to a card… (Ctrl+F / Enter to check)"
+              autoComplete="off"
+            />
           <div className="segmented sort-toggle" role="group" aria-label="Sort and group cards by">
             <button
               aria-pressed={sortMode === "alpha"}
@@ -422,6 +444,17 @@ export function DeckHeader({
               </button>
               {menuOpen && (
                 <div className="header-menu-dropdown">
+                  {canUndo && onUndo && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onUndo();
+                      }}
+                    >
+                      Undo last mark (Ctrl+Z)
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
