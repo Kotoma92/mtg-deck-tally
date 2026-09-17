@@ -28,6 +28,7 @@ export type Deck = {
   rawText: string;
   cards: DeckCard[];
   commanders: string[];
+  commanderCards?: DeckCard[];
   /** The commander's colour identity, used to flag off-identity cards. */
   colors: string[];
 };

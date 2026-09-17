@@ -15,14 +15,39 @@ type Props = {
   onViewMode: (mode: ViewMode) => void;
   onSubmitQuery?: () => void;
   onReset: () => void;
-  onEdit: () => void;
-  onNew: () => void;
+  onChangeDeck: () => void;
+  onNew?: () => void;
+  onUpdate?: () => void;
+  updating?: boolean;
 };
 
+function RefreshIcon({ spinning, className = "", size = 15 }: { spinning?: boolean; className?: string; size?: number }) {
+  return (
+    <svg
+      className={`icon-refresh${spinning ? " is-spinning" : ""} ${className}`.trim()}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
+  );
+}
+
 export function DeckHeader({
-  deck, found, total, query, sortMode, viewMode,
-  onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onEdit, onNew,
+  deck, found, total, query, sortMode, viewMode, updating,
+  onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onChangeDeck, onNew, onUpdate,
 }: Props) {
+  const handleChangeDeck = onChangeDeck ?? onNew;
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -58,6 +83,7 @@ export function DeckHeader({
   const art = deck.commanders.filter((name) => !broken.includes(name));
   const markBroken = (name: string) => setBroken((current) => [...current, name]);
   const getCommanderId = (name: string) =>
+    deck.commanderCards?.find((c) => c.name.toLowerCase() === name.toLowerCase())?.info?.scryfallId ??
     deck.cards.find((c) => c.name.toLowerCase() === name.toLowerCase())?.info?.scryfallId;
 
   return (
@@ -192,23 +218,26 @@ export function DeckHeader({
                       type="button"
                       onClick={() => {
                         setMenuOpen(false);
-                        onEdit();
+                        handleChangeDeck?.();
                       }}
                     >
-                      Edit list
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onNew();
-                      }}
-                    >
-                      New deck
+                      Change deck
                     </button>
                   </div>
                 )}
               </div>
+              {onUpdate && deck.url && (
+                <button
+                  type="button"
+                  className="header-menu-btn header-refresh-btn"
+                  aria-label={updating ? "Updating deck…" : "Update deck"}
+                  title={updating ? "Updating deck…" : "Update deck"}
+                  disabled={updating}
+                  onClick={onUpdate}
+                >
+                  <RefreshIcon spinning={updating} size={15} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -294,8 +323,19 @@ export function DeckHeader({
             >
               Reset
             </button>
-            <button onClick={onEdit}>Edit list</button>
-            <button onClick={onNew}>New deck</button>
+            <button onClick={handleChangeDeck}>Change deck</button>
+            {onUpdate && deck.url && (
+              <button
+                type="button"
+                className="btn-update-deck"
+                disabled={updating}
+                onClick={onUpdate}
+                aria-label={updating ? "Updating deck…" : "Update deck"}
+                title={updating ? "Updating deck…" : "Update deck"}
+              >
+                <RefreshIcon spinning={updating} size={15} />
+              </button>
+            )}
           </div>
         </div>
       </div>

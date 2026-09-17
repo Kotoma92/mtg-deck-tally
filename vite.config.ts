@@ -23,16 +23,20 @@ function deckApiDevServer(): Plugin {
     name: "deck-api-dev-server",
     configureServer(server) {
       server.middlewares.use("/api/deck", async (req, res) => {
-        const send = (body: unknown, status = 200) => {
+        const send = (body: unknown, status = 200, cacheControl = "public, max-age=60") => {
           res.statusCode = status;
           res.setHeader("content-type", "application/json; charset=utf-8");
+          res.setHeader("cache-control", cacheControl);
           res.end(JSON.stringify(body));
         };
-        const url = new URL(req.url ?? "", "http://localhost").searchParams.get("url");
-        const target = url ? parseDeckUrl(url) : null;
+        const url = new URL(req.url ?? "", "http://localhost");
+        const targetUrl = url.searchParams.get("url");
+        const target = targetUrl ? parseDeckUrl(targetUrl) : null;
         if (!target) return send({ error: "That doesn't look like a Moxfield or Archidekt deck link." }, 400);
+        const isRefresh = url.searchParams.has("refresh") || url.searchParams.has("_t");
+        const cacheControl = isRefresh ? "no-cache, no-store, must-revalidate" : "public, max-age=60";
         try {
-          send(await fetchDeck(target));
+          send(await fetchDeck(target), 200, cacheControl);
         } catch (err: any) {
           send({ error: err?.message ?? "Upstream request failed." }, err?.status === 404 ? 404 : 502);
         }

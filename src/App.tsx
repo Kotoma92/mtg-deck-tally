@@ -75,7 +75,15 @@ export default function App() {
           ...current,
           cards: current.cards.map((c) => {
             const fresh = cardMap.get(c.name.toLowerCase());
-            return fresh ? { ...c, info: fresh } : c;
+            return fresh
+              ? {
+                  ...c,
+                  info: {
+                    ...fresh,
+                    scryfallId: c.info?.scryfallId || fresh.scryfallId,
+                  },
+                }
+              : c;
           }),
         };
       });
@@ -85,6 +93,20 @@ export default function App() {
   }, [deck?.name]);
 
   const { found, total } = useMemo(() => countCards(deck?.cards ?? []), [deck]);
+  const [updating, setUpdating] = useState(false);
+
+  async function handleUpdateDeck() {
+    if (!deck?.url || updating) return;
+    setUpdating(true);
+    try {
+      const refreshed = await buildDeckFromUrl(deck.url, deck, true);
+      setDeck(refreshed);
+    } catch (err: any) {
+      alert(err?.message || "Could not update deck. Check your connection and try again.");
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   async function load(build: () => Promise<Deck>) {
     setBusy(true);
@@ -125,13 +147,13 @@ export default function App() {
     }
   }
 
-  function markCard(name: string, delta: number) {
+  function markCard(name: string, delta: number, scryfallId?: string) {
     setDeck((current) =>
       current
         ? {
             ...current,
             cards: current.cards.map((card) =>
-              card.name === name
+              card.name === name && (!scryfallId || card.info?.scryfallId === scryfallId)
                 ? { ...card, found: Math.max(0, Math.min(card.qty, card.found + delta)) }
                 : card,
             ),
@@ -147,7 +169,7 @@ export default function App() {
       (c) => c.found < c.qty && c.name.toLowerCase().includes(needle),
     );
     if (match) {
-      markCard(match.name, 1);
+      markCard(match.name, 1, match.info?.scryfallId);
       setQuery("");
     }
   }
@@ -217,12 +239,13 @@ export default function App() {
         onViewMode={handleViewModeChange}
         onSubmitQuery={submitQuery}
         onReset={() => setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) })}
-        onEdit={() => setImporting(true)}
-        onNew={() => {
+        onChangeDeck={() => {
           clearDeck();
           setDeck(null);
           setImporting(true);
         }}
+        onUpdate={handleUpdateDeck}
+        updating={updating}
       />
       <main>
         <CardList deck={deck} sortMode={sortMode} viewMode={viewMode} query={query} onMark={markCard} />
