@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#241d24" />
+      <stop offset="100%" stop-color="#121013" />
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2c242e" />
+      <stop offset="100%" stop-color="#1c161d" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6b52" />
+      <stop offset="100%" stop-color="#d33a2c" />
+    </linearGradient>
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+  </defs>
+
+  <!-- Full bleed background for Android maskable icon safe zone -->
+  <rect width="512" height="512" fill="url(#bgGrad)" />
+
+  <!-- Center-scaled graphics within 80% safe zone -->
+  <g transform="translate(25.6, 25.6) scale(0.9)">
+    <!-- Background card (tilted) -->
+    <g transform="rotate(-12 256 256)" filter="url(#dropShadow)">
+      <rect x="166" y="116" width="180" height="260" rx="14" fill="#18131a" stroke="#443647" stroke-width="5" />
+      <rect x="180" y="130" width="152" height="232" rx="8" fill="none" stroke="#362939" stroke-width="2" />
+      <rect x="190" y="146" width="132" height="85" rx="5" fill="#2a1e2b" />
+    </g>
+
+    <!-- Foreground card -->
+    <g transform="rotate(4 256 256)" filter="url(#dropShadow)">
+      <rect x="166" y="120" width="180" height="260" rx="14" fill="url(#cardGrad)" stroke="#58435d" stroke-width="5" />
+      <rect x="180" y="134" width="152" height="232" rx="8" fill="none" stroke="#d33a2c" stroke-width="2.5" stroke-opacity="0.6" />
+      <!-- Card art frame -->
+      <rect x="190" y="150" width="132" height="90" rx="5" fill="#140f16" stroke="#403043" stroke-width="2" />
+      <!-- Mana cost / title dots -->
+      <circle cx="204" cy="162" r="4" fill="#ff6b52" />
+      <circle cx="216" cy="162" r="4" fill="#ff9066" />
+      <!-- Card text lines -->
+      <line x1="192" y1="262" x2="320" y2="262" stroke="#4a374f" stroke-width="4" stroke-linecap="round" />
+      <line x1="192" y1="280" x2="295" y2="280" stroke="#4a374f" stroke-width="4" stroke-linecap="round" />
+      <line x1="192" y1="298" x2="310" y2="298" stroke="#4a374f" stroke-width="4" stroke-linecap="round" />
+      <line x1="192" y1="316" x2="260" y2="316" stroke="#4a374f" stroke-width="4" stroke-linecap="round" />
+    </g>
+
+    <!-- Big prominent checkmark badge -->
+    <g filter="url(#dropShadow)">
+      <circle cx="355" cy="355" r="54" fill="#121013" stroke="#ff6b52" stroke-width="4" />
+      <path d="M330 354 L348 372 L382 334" fill="none" stroke="url(#accentGrad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </g>
+</svg>
