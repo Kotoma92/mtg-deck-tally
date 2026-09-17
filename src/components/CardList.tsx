@@ -1,16 +1,26 @@
 import { outsideIdentity } from "../lib/colors";
 import { countCards, groupCards } from "../lib/grouping";
-import type { Deck, SortMode } from "../lib/types";
+import type { Deck, DeckCard, SortMode, ViewMode } from "../lib/types";
 import { CardRow } from "./CardRow";
+import { VisualCard } from "./VisualCard";
 
 type Props = {
   deck: Deck;
   sortMode: SortMode;
+  viewMode: ViewMode;
   query: string;
   onMark: (name: string, delta: number) => void;
 };
 
-export function CardList({ deck, sortMode, query, onMark }: Props) {
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
+export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
   const needle = query.trim().toLowerCase();
   const groups = groupCards(deck.cards, sortMode);
 
@@ -34,6 +44,63 @@ export function CardList({ deck, sortMode, query, onMark }: Props) {
     );
   }
 
+  function renderCards(cards: DeckCard[], isDone: boolean) {
+    if (viewMode === "text") {
+      return (
+        <div className="card-grid">
+          {cards.map((card) => (
+            <CardRow
+              key={card.name}
+              card={card}
+              illegal={!isDone && !!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
+              onMark={() => onMark(card.name, isDone ? -card.qty : 1)}
+              onUndo={() => onMark(card.name, isDone ? -card.qty : -1)}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (viewMode === "stacked") {
+      const piles = chunkArray(cards, 5);
+      return (
+        <div className="visual-stacked-grid">
+          {piles.map((pile, pileIdx) => (
+            <div className="visual-stack" key={pileIdx}>
+              {pile.map((card) => (
+                <VisualCard
+                  key={card.name}
+                  card={card}
+                  stacked
+                  done={isDone}
+                  illegal={!isDone && !!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
+                  onMark={() => onMark(card.name, isDone ? -card.qty : 1)}
+                  onUndo={() => onMark(card.name, isDone ? -card.qty : -1)}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // viewMode === "full"
+    return (
+      <div className="visual-full-grid">
+        {cards.map((card) => (
+          <VisualCard
+            key={card.name}
+            card={card}
+            done={isDone}
+            illegal={!isDone && !!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
+            onMark={() => onMark(card.name, isDone ? -card.qty : 1)}
+            onUndo={() => onMark(card.name, isDone ? -card.qty : -1)}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <>
       {visibleGroups.map((group) => {
@@ -47,34 +114,14 @@ export function CardList({ deck, sortMode, query, onMark }: Props) {
               </span>
             </div>
 
-            <div className="card-grid">
-              {group.remaining.map((card) => (
-                <CardRow
-                  key={card.name}
-                  card={card}
-                  illegal={!!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
-                  onMark={() => onMark(card.name, 1)}
-                  onUndo={() => onMark(card.name, -1)}
-                />
-              ))}
-            </div>
+            {renderCards(group.remaining, false)}
 
             {!group.remaining.length && !needle && <p className="empty-msg">All checked off.</p>}
 
             {group.complete.length > 0 && (
               <details className="found-block">
                 <summary>Found ({group.complete.length})</summary>
-                <div className="card-grid">
-                  {group.complete.map((card) => (
-                    <CardRow
-                      key={card.name}
-                      card={card}
-                      illegal={false}
-                      onMark={() => onMark(card.name, -card.qty)}
-                      onUndo={() => onMark(card.name, -card.qty)}
-                    />
-                  ))}
-                </div>
+                {renderCards(group.complete, true)}
               </details>
             )}
           </section>

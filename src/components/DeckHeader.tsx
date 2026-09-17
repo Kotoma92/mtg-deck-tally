@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cardArtUrl } from "../lib/cards";
 import { colorLabel } from "../lib/colors";
-import type { ColumnLayout, Deck, SortMode } from "../lib/types";
+import type { Deck, SortMode, ViewMode } from "../lib/types";
 
 type Props = {
   deck: Deck;
@@ -9,10 +9,10 @@ type Props = {
   total: number;
   query: string;
   sortMode: SortMode;
-  layout: ColumnLayout;
+  viewMode: ViewMode;
   onQuery: (value: string) => void;
   onSortMode: (mode: SortMode) => void;
-  onLayout: (layout: ColumnLayout) => void;
+  onViewMode: (mode: ViewMode) => void;
   onSubmitQuery?: () => void;
   onReset: () => void;
   onEdit: () => void;
@@ -20,8 +20,8 @@ type Props = {
 };
 
 export function DeckHeader({
-  deck, found, total, query, sortMode, layout,
-  onQuery, onSortMode, onLayout, onSubmitQuery, onReset, onEdit, onNew,
+  deck, found, total, query, sortMode, viewMode,
+  onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onEdit, onNew,
 }: Props) {
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
@@ -250,41 +250,30 @@ export function DeckHeader({
               <span className="label-short">Type</span>
             </button>
           </div>
-          <div className="segmented layout-toggle" role="group" aria-label="Columns">
+          <div className="segmented view-toggle" role="group" aria-label="View mode">
             <button
-              aria-pressed={layout === "auto"}
-              onClick={() => onLayout("auto")}
-              title="Auto columns based on screen width"
+              aria-pressed={viewMode === "text"}
+              onClick={() => onViewMode("text")}
+              title="Text list view"
             >
-              Auto
+              <span className="label-full">Text</span>
+              <span className="label-short">Text</span>
             </button>
             <button
-              aria-pressed={layout === "1"}
-              onClick={() => onLayout("1")}
-              title="1 column"
+              aria-pressed={viewMode === "stacked"}
+              onClick={() => onViewMode("stacked")}
+              title="Visual stacked grid"
             >
-              1
+              <span className="label-full">Stacked</span>
+              <span className="label-short">Stack</span>
             </button>
             <button
-              aria-pressed={layout === "2"}
-              onClick={() => onLayout("2")}
-              title="2 columns"
+              aria-pressed={viewMode === "full"}
+              onClick={() => onViewMode("full")}
+              title="Full card image grid"
             >
-              2
-            </button>
-            <button
-              aria-pressed={layout === "3"}
-              onClick={() => onLayout("3")}
-              title="3 columns"
-            >
-              3
-            </button>
-            <button
-              aria-pressed={layout === "4"}
-              onClick={() => onLayout("4")}
-              title="4 columns"
-            >
-              4
+              <span className="label-full">Full View</span>
+              <span className="label-short">Full</span>
             </button>
           </div>
           <div className="header-action-btns">

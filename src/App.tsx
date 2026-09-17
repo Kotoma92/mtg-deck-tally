@@ -6,9 +6,9 @@ import { ImportPanel } from "./components/ImportPanel";
 import { buildDeckFromUrl, finalizeDeck, prepareDeckFromText, type PreparedDeck } from "./lib/buildDeck";
 import { countCards } from "./lib/grouping";
 import { clearDeck, loadDeck, saveDeck } from "./lib/storage";
-import type { ColumnLayout, Deck, SortMode } from "./lib/types";
+import type { Deck, SortMode, ViewMode } from "./lib/types";
 
-const LAYOUT_STORAGE_KEY = "mtg-deck-tally/layout";
+const VIEW_STORAGE_KEY = "mtg-deck-tally/view-mode";
 const SORT_STORAGE_KEY = "mtg-deck-tally/sort-mode";
 
 export default function App() {
@@ -26,12 +26,12 @@ export default function App() {
       ? (saved as SortMode)
       : "type";
   });
-  const [layout, setLayout] = useState<ColumnLayout>(() => {
-    if (typeof window === "undefined") return "auto";
-    const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
-    return saved === "auto" || saved === "1" || saved === "2" || saved === "3" || saved === "4"
-      ? (saved as ColumnLayout)
-      : "auto";
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "text";
+    const saved = localStorage.getItem(VIEW_STORAGE_KEY);
+    return saved === "text" || saved === "stacked" || saved === "full"
+      ? (saved as ViewMode)
+      : "text";
   });
 
   function handleSortModeChange(next: SortMode) {
@@ -39,9 +39,9 @@ export default function App() {
     localStorage.setItem(SORT_STORAGE_KEY, next);
   }
 
-  function handleLayoutChange(next: ColumnLayout) {
-    setLayout(next);
-    localStorage.setItem(LAYOUT_STORAGE_KEY, next);
+  function handleViewModeChange(next: ViewMode) {
+    setViewMode(next);
+    localStorage.setItem(VIEW_STORAGE_KEY, next);
   }
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export default function App() {
 
   if (importing || !deck) {
     return (
-      <div className={`wrap layout-${layout}`}>
+      <div className="wrap layout-auto">
         <header className="bare-header">
           <h1>Deck Tally</h1>
           <p className="tagline">Check a physical deck against its list, card by card.</p>
@@ -155,17 +155,17 @@ export default function App() {
   }
 
   return (
-    <div className={`wrap layout-${layout}`}>
+    <div className="wrap layout-auto">
       <DeckHeader
         deck={deck}
         found={found}
         total={total}
         query={query}
         sortMode={sortMode}
-        layout={layout}
+        viewMode={viewMode}
         onQuery={setQuery}
         onSortMode={handleSortModeChange}
-        onLayout={handleLayoutChange}
+        onViewMode={handleViewModeChange}
         onSubmitQuery={submitQuery}
         onReset={() => setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) })}
         onEdit={() => setImporting(true)}
@@ -176,7 +176,7 @@ export default function App() {
         }}
       />
       <main>
-        <CardList deck={deck} sortMode={sortMode} query={query} onMark={markCard} />
+        <CardList deck={deck} sortMode={sortMode} viewMode={viewMode} query={query} onMark={markCard} />
       </main>
     </div>
   );

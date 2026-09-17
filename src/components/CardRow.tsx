@@ -40,7 +40,9 @@ export function CardRow({ card, illegal, onMark, onUndo }: Props) {
       onFocus={() => setPreview(true)}
       onBlur={() => setPreview(false)}
     >
-      <span className="qty mono">×{card.qty}</span>
+      <span className="qty mono">
+        {card.qty > 1 && card.found > 0 && !done ? `${card.found}/${card.qty}` : `×${card.qty}`}
+      </span>
 
       <span className="name">
         <span className="card-title" title={card.name}>
@@ -54,20 +56,6 @@ export function CardRow({ card, illegal, onMark, onUndo }: Props) {
           </span>
         )}
       </span>
-
-      {done ? (
-        <span className="stamp">FOUND</span>
-      ) : card.qty <= 8 ? (
-        <span className="pips">
-          {Array.from({ length: card.qty }, (_, i) => (
-            <span key={i} className={`pip${i < card.found ? " filled" : ""}`} />
-          ))}
-        </span>
-      ) : (
-        <span className="miniprogress" title={`${card.found} of ${card.qty}`}>
-          <i style={{ width: `${(card.found / card.qty) * 100}%` }} />
-        </span>
-      )}
 
       {card.qty > 1 && card.found > 0 && (
         <button

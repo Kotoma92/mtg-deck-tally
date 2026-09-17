@@ -34,4 +34,6 @@ export type Deck = {
 export type SortMode = "alpha" | "mana" | "type";
 export type GroupMode = SortMode;
 
+export type ViewMode = "text" | "stacked" | "full";
+
 export type ColumnLayout = "auto" | "1" | "2" | "3" | "4";
