@@ -21,6 +21,10 @@ function cleanHeading(raw: string): string {
     .replace(/\s*\(\d+\)\s*$/, "")
     .trim();
   if (!heading) return "Deck";
+  if (/maybe|consider/i.test(heading)) return "Considering";
+  if (/\bside/i.test(heading)) return "Sideboard";
+  if (/command/i.test(heading)) return "Commander";
+  if (/compan/i.test(heading)) return "Companion";
   return heading.charAt(0).toUpperCase() + heading.slice(1).toLowerCase();
 }
 
@@ -65,6 +69,8 @@ export function commandersFromSections(cards: DeckCard[]): string[] {
  * legendary that could legally head the deck is almost certainly the commander.
  */
 export function inferCommanders(cards: DeckCard[]): string[] {
-  const eligible = cards.filter((card) => card.qty === 1 && card.info?.canBeCommander);
+  const eligible = cards.filter(
+    (card) => card.qty === 1 && card.info?.canBeCommander && !/side|consider|maybe/i.test(card.section),
+  );
   return eligible.length === 1 ? [eligible[0].name] : [];
 }

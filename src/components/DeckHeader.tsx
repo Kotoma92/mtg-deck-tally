@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cardArtUrl } from "../lib/cards";
 import { colorLabel } from "../lib/colors";
-import type { Deck, SortMode, ViewMode } from "../lib/types";
+import { boardOfSection, countCards } from "../lib/grouping";
+import type { BoardType, Deck, SortMode, ViewMode } from "../lib/types";
 
 type Props = {
   deck: Deck;
@@ -10,9 +11,13 @@ type Props = {
   query: string;
   sortMode: SortMode;
   viewMode: ViewMode;
+  activeBoard: BoardType;
   onQuery: (value: string) => void;
   onSortMode: (mode: SortMode) => void;
   onViewMode: (mode: ViewMode) => void;
+  onBoardChange: (board: BoardType) => void;
+  onOpenShoppingList: () => void;
+  missingCount: number;
   onSubmitQuery?: () => void;
   onReset: () => void;
   onChangeDeck: () => void;
@@ -43,14 +48,28 @@ function RefreshIcon({ spinning, className = "", size = 15 }: { spinning?: boole
 }
 
 export function DeckHeader({
-  deck, found, total, query, sortMode, viewMode, updating,
-  onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onChangeDeck, onUpdate,
+  deck, found, total, query, sortMode, viewMode, activeBoard, updating,
+  onQuery, onSortMode, onViewMode, onBoardChange, onOpenShoppingList, missingCount,
+  onSubmitQuery, onReset, onChangeDeck, onUpdate,
 }: Props) {
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  const mainCards = useMemo(() => deck.cards.filter((c) => boardOfSection(c.section) === "main"), [deck.cards]);
+  const sideboardCards = useMemo(() => deck.cards.filter((c) => boardOfSection(c.section) === "sideboard"), [deck.cards]);
+  const consideringCards = useMemo(() => deck.cards.filter((c) => boardOfSection(c.section) === "considering"), [deck.cards]);
+
+  const hasSideboard = sideboardCards.length > 0;
+  const hasConsidering = consideringCards.length > 0;
+  const hasMultipleBoards = hasSideboard || hasConsidering;
+
+  const mainCount = useMemo(() => countCards(mainCards), [mainCards]);
+  const sideCount = useMemo(() => countCards(sideboardCards), [sideboardCards]);
+  const considerCount = useMemo(() => countCards(consideringCards), [consideringCards]);
+  const totalCount = useMemo(() => countCards(deck.cards), [deck.cards]);
 
   useEffect(() => {
     const el = heroRef.current;
@@ -105,6 +124,17 @@ export function DeckHeader({
             <div>
               <h1>Deck Tally</h1>
               <p className="tagline">
+                {hasMultipleBoards && (
+                  <span className="board-indicator">
+                    {activeBoard === "sideboard"
+                      ? "Sideboard • "
+                      : activeBoard === "considering"
+                      ? "Considering • "
+                      : activeBoard === "all"
+                      ? "All Boards • "
+                      : ""}
+                  </span>
+                )}
                 {remaining === 0
                   ? "Every card accounted for."
                   : `${remaining} card${remaining === 1 ? "" : "s"} left to find.`}
@@ -205,6 +235,15 @@ export function DeckHeader({
                       type="button"
                       onClick={() => {
                         setMenuOpen(false);
+                        onOpenShoppingList();
+                      }}
+                    >
+                      Shopping list {missingCount > 0 ? `(${missingCount} missing)` : ""}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
                         if (found === 0 || window.confirm("Reset all checkmarks?")) {
                           onReset();
                         }
@@ -242,6 +281,51 @@ export function DeckHeader({
           <div className="progress-rail">
             <div className="progress-fill" style={{ width: total ? `${(found / total) * 100}%` : 0 }} />
           </div>
+
+          {hasMultipleBoards && (
+            <div className="board-selector" role="tablist" aria-label="Deck boards">
+              <button
+                type="button"
+                role="tab"
+                className={`board-tab${activeBoard === "main" ? " is-active" : ""}`}
+                aria-selected={activeBoard === "main"}
+                onClick={() => onBoardChange("main")}
+              >
+                Main Deck <span className="tab-badge mono">{mainCount.found}/{mainCount.total}</span>
+              </button>
+              {hasSideboard && (
+                <button
+                  type="button"
+                  role="tab"
+                  className={`board-tab${activeBoard === "sideboard" ? " is-active" : ""}`}
+                  aria-selected={activeBoard === "sideboard"}
+                  onClick={() => onBoardChange("sideboard")}
+                >
+                  Sideboard <span className="tab-badge mono">{sideCount.found}/{sideCount.total}</span>
+                </button>
+              )}
+              {hasConsidering && (
+                <button
+                  type="button"
+                  role="tab"
+                  className={`board-tab${activeBoard === "considering" ? " is-active" : ""}`}
+                  aria-selected={activeBoard === "considering"}
+                  onClick={() => onBoardChange("considering")}
+                >
+                  Considering <span className="tab-badge mono">{considerCount.found}/{considerCount.total}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                role="tab"
+                className={`board-tab${activeBoard === "all" ? " is-active" : ""}`}
+                aria-selected={activeBoard === "all"}
+                onClick={() => onBoardChange("all")}
+              >
+                All <span className="tab-badge mono">{totalCount.found}/{totalCount.total}</span>
+              </button>
+            </div>
+          )}
 
           <div className="controls-row">
             <input
@@ -311,6 +395,14 @@ export function DeckHeader({
             </button>
           </div>
           <div className="header-action-btns">
+            <button
+              type="button"
+              className="btn-shopping-list"
+              onClick={onOpenShoppingList}
+              title="View and export missing cards"
+            >
+              🛒 Missing {missingCount > 0 ? `(${missingCount})` : ""}
+            </button>
             <button
               onClick={() => {
                 if (found === 0 || window.confirm("Reset all checkmarks?")) {

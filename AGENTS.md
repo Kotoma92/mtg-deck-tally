@@ -56,6 +56,7 @@ git checkout -b <type>/<short-description>
 | `shared/deck-sources.mjs` | Fetches and normalises Moxfield/Archidekt decks |
 | `vite.config.ts` | Dev middleware serving /api/deck, /api/moxfield/decks, and /api/card-image |
 | `src/worker.ts` | Cloudflare Worker handling /api/deck, /api/moxfield/decks, /api/card-image, and /cards.db |
+| `src/components/ShoppingListModal.tsx` | Missing cards modal with clipboard copy & txt export |
 | `public/sw.js` | Service Worker caching app shell and persistent card images |
 | `scripts/build_db.py` | Builds `public/cards.db` from Scryfall bulk data |
 
