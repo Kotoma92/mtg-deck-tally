@@ -21,6 +21,28 @@ type Props = {
   updating?: boolean;
 };
 
+function RefreshIcon({ spinning, className = "" }: { spinning?: boolean; className?: string }) {
+  return (
+    <svg
+      className={`icon-refresh${spinning ? " is-spinning" : ""} ${className}`.trim()}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
+  );
+}
+
 export function DeckHeader({
   deck, found, total, query, sortMode, viewMode, updating,
   onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onEdit, onNew, onUpdate,
@@ -165,6 +187,18 @@ export function DeckHeader({
               <div className="progress-stat mono">
                 {found} / {total} <span>found</span>
               </div>
+              {onUpdate && deck.url && (
+                <button
+                  type="button"
+                  className="header-menu-btn header-refresh-btn"
+                  aria-label="Update deck from Moxfield"
+                  title="Update deck"
+                  disabled={updating}
+                  onClick={onUpdate}
+                >
+                  <RefreshIcon spinning={updating} />
+                </button>
+              )}
               <div className="header-menu-container">
                 <button
                   type="button"
@@ -189,7 +223,8 @@ export function DeckHeader({
                           onUpdate();
                         }}
                       >
-                        {updating ? "Updating deck…" : "Update deck"}
+                        <RefreshIcon spinning={updating} />
+                        <span>{updating ? "Updating deck…" : "Update deck"}</span>
                       </button>
                     )}
                     <button
@@ -302,11 +337,13 @@ export function DeckHeader({
             {onUpdate && deck.url && (
               <button
                 type="button"
+                className="btn-update-deck"
                 disabled={updating}
                 onClick={onUpdate}
                 title="Fetch latest cards and printings from Moxfield/Archidekt"
               >
-                {updating ? "Updating…" : "Update deck"}
+                <RefreshIcon spinning={updating} />
+                <span>{updating ? "Updating…" : "Update deck"}</span>
               </button>
             )}
             <button

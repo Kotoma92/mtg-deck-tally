@@ -1184,6 +1184,9 @@ textarea {
 }
 
 .header-menu-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   text-align: left;
   background: transparent;
   border: none;
@@ -1200,6 +1203,46 @@ textarea {
 .header-menu-dropdown button:hover {
   background: color-mix(in srgb, var(--line) 40%, transparent);
   color: var(--accent);
+}
+
+.icon-refresh {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.icon-refresh.is-spinning {
+  animation: spin 0.85s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.header-refresh-btn {
+  color: var(--ink-soft);
+}
+
+.header-refresh-btn:hover {
+  color: var(--accent);
+}
+
+.header-refresh-btn:disabled,
+.btn-update-deck:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-update-deck {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 @media (max-width: 768px) {
