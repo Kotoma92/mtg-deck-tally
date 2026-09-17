@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cardArtUrl } from "../lib/cards";
 import { colorLabel } from "../lib/colors";
 import type { ColumnLayout, Deck, SortMode } from "../lib/types";
@@ -25,12 +25,35 @@ export function DeckHeader({
 }: Props) {
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const scrolled = window.scrollY > 40;
+      setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".header-menu-container")) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [menuOpen]);
+
   // A card with no art on Scryfall shouldn't leave a broken image in the banner.
   const art = deck.commanders.filter((name) => !broken.includes(name));
   const markBroken = (name: string) => setBroken((current) => [...current, name]);
 
   return (
-    <header>
+    <header className={isScrolled ? "header-scrolled" : undefined}>
       {art.length > 0 && (
         <div className="header-art" aria-hidden>
           {art.map((name) => (
@@ -40,6 +63,74 @@ export function DeckHeader({
       )}
 
       <div className="header-inner">
+        {/* Compact header shown on mobile when scrolled */}
+        <div className="compact-header">
+          <div className="compact-deck-info">
+            {deck.name && (
+              <span className="compact-deck-name" title={deck.name}>
+                {deck.name}
+              </span>
+            )}
+            {deck.commanders.length > 0 && (
+              <span className="compact-commander" title={deck.commanders.join(" + ")}>
+                <span className="commander-symbol">⌘</span> {deck.commanders.join(" + ")}
+              </span>
+            )}
+          </div>
+          <div className="compact-right">
+            <div className="progress-stat mono">
+              {found} / {total} <span>found</span>
+            </div>
+            <div className="header-menu-container">
+              <button
+                type="button"
+                className="header-menu-btn"
+                aria-label="More actions"
+                aria-expanded={menuOpen}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen((prev) => !prev);
+                }}
+              >
+                ⋯
+              </button>
+              {menuOpen && (
+                <div className="header-menu-dropdown">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (found === 0 || window.confirm("Reset all checkmarks?")) {
+                        onReset();
+                      }
+                    }}
+                  >
+                    Reset checkmarks
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onEdit();
+                    }}
+                  >
+                    Edit list
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onNew();
+                    }}
+                  >
+                    New deck
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="title-row">
           <div>
             <h1>Deck Tally</h1>
@@ -93,6 +184,7 @@ export function DeckHeader({
         <div className="controls-row">
           <input
             type="search"
+            className="search-input"
             value={query}
             onChange={(event) => onQuery(event.target.value)}
             onKeyDown={(event) => {
@@ -104,30 +196,33 @@ export function DeckHeader({
             placeholder="Jump to a card… (Enter to check)"
             autoComplete="off"
           />
-          <div className="segmented" role="group" aria-label="Sort and group cards by">
+          <div className="segmented sort-toggle" role="group" aria-label="Sort and group cards by">
             <button
               aria-pressed={sortMode === "alpha"}
               onClick={() => onSortMode("alpha")}
               title="Sort alphabetically A–Z"
             >
-              Alphabetical
+              <span className="label-full">Alphabetical</span>
+              <span className="label-short">A–Z</span>
             </button>
             <button
               aria-pressed={sortMode === "mana"}
               onClick={() => onSortMode("mana")}
               title="Group by mana value curve"
             >
-              Mana Value
+              <span className="label-full">Mana Value</span>
+              <span className="label-short">CMC</span>
             </button>
             <button
               aria-pressed={sortMode === "type"}
               onClick={() => onSortMode("type")}
               title="Group by card type"
             >
-              Type
+              <span className="label-full">Type</span>
+              <span className="label-short">Type</span>
             </button>
           </div>
-          <div className="segmented" role="group" aria-label="Columns">
+          <div className="segmented layout-toggle" role="group" aria-label="Columns">
             <button
               aria-pressed={layout === "auto"}
               onClick={() => onLayout("auto")}
@@ -164,18 +259,20 @@ export function DeckHeader({
               4
             </button>
           </div>
-          <button
-            onClick={() => {
-              if (found === 0 || window.confirm("Reset all checkmarks?")) {
-                onReset();
-              }
-            }}
-            title="Clear all checkmarks"
-          >
-            Reset
-          </button>
-          <button onClick={onEdit}>Edit list</button>
-          <button onClick={onNew}>New deck</button>
+          <div className="header-action-btns">
+            <button
+              onClick={() => {
+                if (found === 0 || window.confirm("Reset all checkmarks?")) {
+                  onReset();
+                }
+              }}
+              title="Clear all checkmarks"
+            >
+              Reset
+            </button>
+            <button onClick={onEdit}>Edit list</button>
+            <button onClick={onNew}>New deck</button>
+          </div>
         </div>
       </div>
     </header>
