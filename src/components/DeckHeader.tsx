@@ -208,7 +208,7 @@ export function DeckHeader({
               )}
               {deck.commanders.length > 0 && (
                 <span className="compact-commander" title={deck.commanders.join(" + ")}>
-                  <span className="commander-symbol">⌘</span> {deck.commanders.join(" + ")}
+                  {deck.commanders.join(" + ")}
                 </span>
               )}
             </div>
