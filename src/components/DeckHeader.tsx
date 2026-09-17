@@ -57,6 +57,8 @@ export function DeckHeader({
   // A card with no art on Scryfall shouldn't leave a broken image in the banner.
   const art = deck.commanders.filter((name) => !broken.includes(name));
   const markBroken = (name: string) => setBroken((current) => [...current, name]);
+  const getCommanderId = (name: string) =>
+    deck.cards.find((c) => c.name.toLowerCase() === name.toLowerCase())?.info?.scryfallId;
 
   return (
     <header className="deck-header">
@@ -64,7 +66,12 @@ export function DeckHeader({
         {art.length > 0 && (
           <div className="header-art" aria-hidden>
             {art.map((name) => (
-              <img key={name} src={cardArtUrl(name)} alt="" onError={() => markBroken(name)} />
+              <img
+                key={name}
+                src={cardArtUrl(name, getCommanderId(name))}
+                alt=""
+                onError={() => markBroken(name)}
+              />
             ))}
           </div>
         )}
@@ -89,7 +96,7 @@ export function DeckHeader({
               <img
                 key={name}
                 className="commander-thumb"
-                src={cardArtUrl(name)}
+                src={cardArtUrl(name, getCommanderId(name))}
                 alt={name}
                 title={name}
                 onError={() => markBroken(name)}

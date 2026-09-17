@@ -40,14 +40,26 @@ function deckApiDevServer(): Plugin {
 
       server.middlewares.use("/api/card-image", async (req, res) => {
         const url = new URL(req.url ?? "", "http://localhost");
+        const id = url.searchParams.get("id")?.trim();
         const name = url.searchParams.get("name")?.trim();
         const version = url.searchParams.get("version") || "normal";
-        if (!name) {
-          res.statusCode = 400;
-          return res.end("Missing card name");
+
+        // 1. If we have a valid UUID, redirect directly to Scryfall CDN (no proxy latency)
+        if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+          const cdnUrl = `https://cards.scryfall.io/${version}/front/${id[0]}/${id[1]}/${id}.jpg`;
+          res.statusCode = 302;
+          res.setHeader("Location", cdnUrl);
+          res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
+          return res.end();
         }
 
-        const fetchScryfall = async (exactName: string) => {
+        // 2. Name-only fallback via Scryfall API
+        if (!name) {
+          res.statusCode = 400;
+          return res.end("Missing card id or name");
+        }
+
+        const fetchScryfallByName = async (exactName: string) => {
           const scryfallUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(exactName)}&format=image&version=${version}`;
           return fetch(scryfallUrl, {
             headers: {
@@ -58,9 +70,9 @@ function deckApiDevServer(): Plugin {
         };
 
         try {
-          let upstream = await fetchScryfall(name);
+          let upstream = await fetchScryfallByName(name);
           if (!upstream.ok && name.includes(" // ")) {
-            upstream = await fetchScryfall(name.split(" // ")[0]);
+            upstream = await fetchScryfallByName(name.split(" // ")[0]);
           }
 
           if (!upstream.ok) {

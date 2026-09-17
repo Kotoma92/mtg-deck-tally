@@ -6,6 +6,7 @@ export type CardInfo = {
   manaCost: string;
   cmc: number;
   canBeCommander: boolean;
+  scryfallId?: string;
 };
 
 /** A line of the decklist, plus how many copies you've checked off so far. */

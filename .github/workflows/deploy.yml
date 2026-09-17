@@ -7,6 +7,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment (staging or production)'
+        required: false
+        default: 'staging'
+        type: choice
+        options: [staging, production]
 
 concurrency:
   group: deploy-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -15,7 +22,7 @@ concurrency:
 jobs:
   deploy-staging:
     name: Deploy to Staging (Beta)
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -79,7 +86,7 @@ jobs:
 
   deploy-production:
     name: Deploy to Production
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'production')
     runs-on: ubuntu-latest
     permissions:
       contents: read

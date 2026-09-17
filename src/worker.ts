@@ -68,11 +68,26 @@ export default {
 
     // API Route for proxying and edge-caching Scryfall card images
     if (url.pathname === "/api/card-image") {
+      const id = url.searchParams.get("id")?.trim();
       const name = url.searchParams.get("name")?.trim();
       const version = url.searchParams.get("version") || "normal";
-      if (!name) return new Response("Missing card name", { status: 400 });
+      if (!id && !name) return new Response("Missing card id or name", { status: 400 });
 
-      // Check Cloudflare Edge Cache
+      // 1. Direct redirect to Scryfall CDN if Scryfall ID is available (no proxying, full CDN speed).
+      // Skip worker-side caching — Scryfall's own CDN handles caching for redirected requests.
+      if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        const cdnUrl = `https://cards.scryfall.io/${version}/front/${id[0]}/${id[1]}/${id}.jpg`;
+        return new Response(null, {
+          status: 302,
+          headers: {
+            "Location": cdnUrl,
+            "Cache-Control": "public, max-age=2592000, immutable",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      // For name-based fallback, check Cloudflare Edge Cache first (avoids repeat API calls)
       // @ts-ignore
       const cache = typeof caches !== "undefined" && caches.default ? caches.default : null;
       const cacheKey = new Request(url.toString(), { method: "GET" });
@@ -81,7 +96,8 @@ export default {
         if (cached) return cached;
       }
 
-      const fetchScryfall = async (exactName: string) => {
+      // 2. Fallback search by exact name if id is missing or 404
+      const fetchScryfallByName = async (exactName: string) => {
         const scryfallUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(exactName)}&format=image&version=${version}`;
         return fetch(scryfallUrl, {
           headers: {
@@ -95,10 +111,13 @@ export default {
         } as any);
       };
 
+      // Name-only fallback: look up via Scryfall API (rate-limited to 10 req/s, last resort)
+      if (!name) return new Response("Missing card id or name", { status: 400 });
+
       try {
-        let scryfallRes = await fetchScryfall(name);
+        let scryfallRes = await fetchScryfallByName(name);
         if (!scryfallRes.ok && name.includes(" // ")) {
-          scryfallRes = await fetchScryfall(name.split(" // ")[0]);
+          scryfallRes = await fetchScryfallByName(name.split(" // ")[0]);
         }
 
         if (!scryfallRes.ok) {

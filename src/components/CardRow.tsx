@@ -71,7 +71,7 @@ export function CardRow({ card, illegal, onMark, onUndo }: Props) {
       )}
 
       {preview && (
-        <img className="card-preview" src={cardImageUrl(card.name)} alt="" loading="lazy" aria-hidden />
+        <img className="card-preview" src={cardImageUrl(card.name, "normal", card.info?.scryfallId)} alt="" loading="lazy" aria-hidden />
       )}
     </div>
   );
