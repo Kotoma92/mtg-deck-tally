@@ -10,7 +10,7 @@ type Props = {
   sortMode: SortMode;
   viewMode: ViewMode;
   query: string;
-  onMark: (name: string, delta: number) => void;
+  onMark: (name: string, delta: number, scryfallId?: string) => void;
 };
 
 function getGridColumnCount(width: number): number {
@@ -77,13 +77,13 @@ export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
     if (viewMode === "text") {
       return (
         <div className="card-grid">
-          {cards.map((card) => (
+          {cards.map((card, idx) => (
             <CardRow
-              key={card.name}
+              key={`${card.name}-${card.info?.scryfallId ?? ""}-${card.section}-${idx}`}
               card={card}
               illegal={!isDone && !!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
-              onMark={() => onMark(card.name, isDone ? -card.qty : 1)}
-              onUndo={() => onMark(card.name, isDone ? -card.qty : -1)}
+              onMark={() => onMark(card.name, isDone ? -card.qty : 1, card.info?.scryfallId)}
+              onUndo={() => onMark(card.name, isDone ? -card.qty : -1, card.info?.scryfallId)}
             />
           ))}
         </div>
@@ -98,13 +98,13 @@ export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
             <div className="visual-stack" key={pileIdx}>
               {pile.map((card, cardIdx) => (
                 <VisualCard
-                  key={card.name}
+                  key={`${card.name}-${card.info?.scryfallId ?? ""}-${card.section}-${cardIdx}`}
                   card={card}
                   stacked={cardIdx > 0}
                   done={isDone}
                   illegal={!isDone && !!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
-                  onMark={() => onMark(card.name, isDone ? -card.qty : 1)}
-                  onUndo={() => onMark(card.name, isDone ? -card.qty : -1)}
+                  onMark={() => onMark(card.name, isDone ? -card.qty : 1, card.info?.scryfallId)}
+                  onUndo={() => onMark(card.name, isDone ? -card.qty : -1, card.info?.scryfallId)}
                 />
               ))}
             </div>
@@ -116,14 +116,14 @@ export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
     // viewMode === "full"
     return (
       <div className="visual-full-grid">
-        {cards.map((card) => (
+        {cards.map((card, idx) => (
           <VisualCard
-            key={card.name}
+            key={`${card.name}-${card.info?.scryfallId ?? ""}-${card.section}-${idx}`}
             card={card}
             done={isDone}
             illegal={!isDone && !!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
-            onMark={() => onMark(card.name, isDone ? -card.qty : 1)}
-            onUndo={() => onMark(card.name, isDone ? -card.qty : -1)}
+            onMark={() => onMark(card.name, isDone ? -card.qty : 1, card.info?.scryfallId)}
+            onUndo={() => onMark(card.name, isDone ? -card.qty : -1, card.info?.scryfallId)}
           />
         ))}
       </div>

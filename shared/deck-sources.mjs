@@ -78,6 +78,7 @@ async function fetchMoxfield(id) {
         name: entry.card.name,
         qty: entry.quantity ?? 1,
         section: board === "mainboard" ? "Deck" : board === "commanders" ? "Commander" : "Companion",
+        scryfallId: entry.card?.scryfall_id || undefined,
       });
     }
   }
@@ -97,7 +98,12 @@ async function fetchArchidekt(id) {
     if (entry.modifier === "Maybeboard") continue;
     const isCommander = categories.includes("Commander");
     if (isCommander) commanders.push(name);
-    cards.push({ name, qty: entry.quantity ?? 1, section: isCommander ? "Commander" : "Deck" });
+    cards.push({
+      name,
+      qty: entry.quantity ?? 1,
+      section: isCommander ? "Commander" : "Deck",
+      scryfallId: entry.card?.uid || undefined,
+    });
   }
   return { source: "archidekt", name: deck.name, commanders, cards };
 }

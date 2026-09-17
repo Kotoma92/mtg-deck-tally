@@ -3,7 +3,12 @@ import { canonicalColors } from "./colors";
 import { commandersFromSections, inferCommanders, parseDecklist } from "./decklist";
 import type { Deck, DeckCard, DeckSource } from "./types";
 
-type RawCard = { name: string; qty: number; section: string };
+type RawCard = {
+  name: string;
+  qty: number;
+  section: string;
+  scryfallId?: string;
+};
 
 type BuildInput = {
   source: DeckSource;
@@ -21,17 +26,41 @@ export async function buildDeck(input: BuildInput, previous?: Deck | null): Prom
 
   // Carry checked-off progress across an edit, so fixing a typo doesn't reset you.
   const priorProgress = new Map(
-    (previous?.cards ?? []).map((card) => [card.name.toLowerCase(), card.found]),
+    (previous?.cards ?? []).map((card) => [
+      `${card.name.toLowerCase()}::${card.info?.scryfallId ?? ""}`,
+      card.found,
+    ]),
   );
 
   const cards: DeckCard[] = input.cards.map((card) => {
-    const info = index.get(card.name.toLowerCase());
+    const baseInfo = index.get(card.name.toLowerCase());
+    const scryfallId = card.scryfallId || baseInfo?.scryfallId;
+    const info = baseInfo
+      ? {
+          ...baseInfo,
+          scryfallId,
+        }
+      : card.scryfallId
+      ? {
+          name: card.name,
+          colorIdentity: "",
+          typeLine: "",
+          manaCost: "",
+          cmc: 0,
+          canBeCommander: false,
+          scryfallId: card.scryfallId,
+        }
+      : undefined;
+
+    const progressKey = `${card.name.toLowerCase()}::${scryfallId ?? ""}`;
+    const previousFound = priorProgress.get(progressKey) ?? priorProgress.get(card.name.toLowerCase()) ?? 0;
+
     return {
       ...card,
       // Prefer the index's spelling: it fixes casing and completes DFC names.
-      name: info?.name ?? card.name,
+      name: baseInfo?.name ?? card.name,
       info,
-      found: Math.min(priorProgress.get(card.name.toLowerCase()) ?? 0, card.qty),
+      found: Math.min(previousFound, card.qty),
     };
   });
 
@@ -48,6 +77,7 @@ export async function buildDeck(input: BuildInput, previous?: Deck | null): Prom
   // The tally list contains only the remaining 99 (or 98 for partner commanders) cards.
   const commanderSet = new Set(commanders.map((name) => name.toLowerCase()));
   const tallyCards = cards.filter((card) => !commanderSet.has(card.name.toLowerCase()));
+  const commanderCards = cards.filter((card) => commanderSet.has(card.name.toLowerCase()));
 
   return {
     source: input.source,
@@ -56,6 +86,7 @@ export async function buildDeck(input: BuildInput, previous?: Deck | null): Prom
     rawText: input.rawText,
     cards: tallyCards,
     commanders,
+    commanderCards,
     colors: canonicalColors(identity),
   };
 }
@@ -122,6 +153,7 @@ export function finalizeDeck(
 ): Deck {
   const commanderSet = new Set(commanders.map((name) => name.toLowerCase()));
   const tallyCards = prepared.cards.filter((card) => !commanderSet.has(card.name.toLowerCase()));
+  const commanderCards = prepared.cards.filter((card) => commanderSet.has(card.name.toLowerCase()));
 
   const identity = new Set<string>();
   for (const card of prepared.cards) {
@@ -135,6 +167,7 @@ export function finalizeDeck(
     rawText: prepared.rawText,
     cards: tallyCards,
     commanders,
+    commanderCards,
     colors: canonicalColors(identity),
   };
 }

@@ -58,6 +58,7 @@ export function DeckHeader({
   const art = deck.commanders.filter((name) => !broken.includes(name));
   const markBroken = (name: string) => setBroken((current) => [...current, name]);
   const getCommanderId = (name: string) =>
+    deck.commanderCards?.find((c) => c.name.toLowerCase() === name.toLowerCase())?.info?.scryfallId ??
     deck.cards.find((c) => c.name.toLowerCase() === name.toLowerCase())?.info?.scryfallId;
 
   return (
