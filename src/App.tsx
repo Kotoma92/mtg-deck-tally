@@ -1,14 +1,23 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CardList } from "./components/CardList";
+import { CelebrationBanner } from "./components/CelebrationBanner";
 import { CommanderPicker } from "./components/CommanderPicker";
+import { ConfettiCanvas } from "./components/ConfettiCanvas";
 import { DeckHeader } from "./components/DeckHeader";
 import { ImportPanel } from "./components/ImportPanel";
 import { ShoppingListModal } from "./components/ShoppingListModal";
+import { UndoToast, type ToastInfo } from "./components/UndoToast";
 import { buildDeckFromUrl, finalizeDeck, prepareDeckFromText, type PreparedDeck } from "./lib/buildDeck";
 import { boardOfSection, countCards, filterCardsByBoard } from "./lib/grouping";
 import { lookupCards } from "./lib/cards";
 import { loadDeck, saveDeck } from "./lib/storage";
 import type { BoardType, Deck, SortMode, ViewMode } from "./lib/types";
+
+type UndoEntry = {
+  name: string;
+  delta: number;
+  scryfallId?: string;
+};
 
 const VIEW_STORAGE_KEY = "mtg-deck-tally/view-mode";
 const SORT_STORAGE_KEY = "mtg-deck-tally/sort-mode";
@@ -37,6 +46,12 @@ export default function App() {
   });
   const [activeBoard, setActiveBoard] = useState<BoardType>("main");
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
+  const [undoStack, setUndoStack] = useState<UndoEntry[]>([]);
+  const [toast, setToast] = useState<ToastInfo | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevFoundRef = useRef<number | null>(null);
+  const prevBoardRef = useRef<BoardType>(activeBoard);
 
   function handleSortModeChange(next: SortMode) {
     setSortMode(next);
@@ -77,6 +92,29 @@ export default function App() {
     () => displayedCards.reduce((acc, c) => acc + Math.max(0, c.qty - c.found), 0),
     [displayedCards],
   );
+
+  useEffect(() => {
+    if (prevBoardRef.current !== activeBoard) {
+      prevBoardRef.current = activeBoard;
+      prevFoundRef.current = found;
+      setShowCelebration(false);
+      setShowConfetti(false);
+      return;
+    }
+    if (
+      prevFoundRef.current !== null &&
+      prevFoundRef.current < total &&
+      found === total &&
+      total > 0
+    ) {
+      setShowCelebration(true);
+      setShowConfetti(true);
+    } else if (found < total && showCelebration) {
+      setShowCelebration(false);
+      setShowConfetti(false);
+    }
+    prevFoundRef.current = found;
+  }, [found, total, activeBoard, showCelebration]);
   // Ensure all cards have scryfallId before rendering to avoid rate‑limited name lookups.
   // Keyed on deck.name so this only re-runs when a *different* deck is loaded, not on every card mark.
   const [ready, setReady] = useState<boolean>(() => {
@@ -175,20 +213,98 @@ export default function App() {
     }
   }
 
-  function markCard(name: string, delta: number, scryfallId?: string) {
-    setDeck((current) =>
-      current
-        ? {
-            ...current,
-            cards: current.cards.map((card) =>
-              card.name === name && (!scryfallId || card.info?.scryfallId === scryfallId)
-                ? { ...card, found: Math.max(0, Math.min(card.qty, card.found + delta)) }
-                : card,
-            ),
-          }
-        : current,
-    );
+  function markCard(name: string, delta: number, scryfallId?: string, isUndo = false) {
+    setDeck((current) => {
+      if (!current) return current;
+      const target = current.cards.find(
+        (card) => card.name === name && (!scryfallId || card.info?.scryfallId === scryfallId),
+      );
+      if (!target) return current;
+
+      const newFound = Math.max(0, Math.min(target.qty, target.found + delta));
+      const actualDelta = newFound - target.found;
+      if (actualDelta === 0) return current;
+
+      if (!isUndo) {
+        setUndoStack((prev) => [
+          ...prev.slice(-29),
+          { name: target.name, delta: actualDelta, scryfallId: target.info?.scryfallId },
+        ]);
+        setToast({
+          id: Date.now(),
+          message: actualDelta > 0 ? `Found: ${target.name}` : `Unchecked: ${target.name}`,
+          cardName: target.name,
+          actionType: actualDelta > 0 ? "found" : "unfound",
+        });
+      } else {
+        setToast({
+          id: Date.now(),
+          message: `Undid: ${target.name}`,
+          cardName: target.name,
+          actionType: "undone",
+        });
+      }
+
+      return {
+        ...current,
+        cards: current.cards.map((card) =>
+          card.name === name && (!scryfallId || card.info?.scryfallId === scryfallId)
+            ? { ...card, found: newFound }
+            : card,
+        ),
+      };
+    });
   }
+
+  const handleUndo = useCallback(() => {
+    setUndoStack((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+      markCard(last.name, -last.delta, last.scryfallId, true);
+      return prev.slice(0, -1);
+    });
+  }, []);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      const isInput =
+        target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+
+      // Ctrl+F or Cmd+F: Global search
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        const searchInput = document.getElementById("card-search-input") as HTMLInputElement | null;
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+        return;
+      }
+
+      // '/' quick-search hotkey when not in input
+      if (e.key === "/" && !isInput && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const searchInput = document.getElementById("card-search-input") as HTMLInputElement | null;
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+        return;
+      }
+
+      // Ctrl+Z or Cmd+Z: Undo
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        if (isInput) return;
+        e.preventDefault();
+        handleUndo();
+        return;
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleUndo]);
 
   function submitQuery() {
     const needle = query.trim().toLowerCase();
@@ -287,6 +403,7 @@ export default function App() {
 
   return (
     <div className="wrap">
+      {showConfetti && <ConfettiCanvas onComplete={() => setShowConfetti(false)} />}
       <DeckHeader
         deck={deck}
         found={found}
@@ -302,13 +419,39 @@ export default function App() {
         onOpenShoppingList={() => setShoppingListOpen(true)}
         missingCount={activeMissing}
         onSubmitQuery={submitQuery}
-        onReset={() => setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) })}
+        onReset={() => {
+          setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) });
+          setUndoStack([]);
+          setToast(null);
+          setShowCelebration(false);
+          setShowConfetti(false);
+        }}
         onChangeDeck={() => {
           setImporting(true);
         }}
         onUpdate={handleUpdateDeck}
         updating={updating}
+        onUndo={handleUndo}
+        canUndo={undoStack.length > 0}
       />
+      {showCelebration && (
+        <CelebrationBanner
+          total={total}
+          boardName={
+            activeBoard === "main"
+              ? "Main Deck"
+              : activeBoard === "sideboard"
+              ? "Sideboard"
+              : activeBoard === "considering"
+              ? "Considering"
+              : undefined
+          }
+          onDismiss={() => {
+            setShowCelebration(false);
+            setShowConfetti(false);
+          }}
+        />
+      )}
       <main>
         <CardList
           deck={deck}
@@ -325,6 +468,12 @@ export default function App() {
         isOpen={shoppingListOpen}
         onClose={() => setShoppingListOpen(false)}
         activeBoard={activeBoard}
+      />
+      <UndoToast
+        toast={toast}
+        canUndo={undoStack.length > 0}
+        onUndo={handleUndo}
+        onDismiss={() => setToast(null)}
       />
     </div>
   );
