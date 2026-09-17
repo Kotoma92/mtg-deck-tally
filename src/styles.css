@@ -1233,16 +1233,26 @@ textarea {
   color: var(--accent);
 }
 
+.btn-update-deck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+
+.btn-update-deck:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 .header-refresh-btn:disabled,
 .btn-update-deck:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.btn-update-deck {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
 @media (max-width: 768px) {

@@ -21,12 +21,12 @@ type Props = {
   updating?: boolean;
 };
 
-function RefreshIcon({ spinning, className = "" }: { spinning?: boolean; className?: string }) {
+function RefreshIcon({ spinning, className = "", size = 15 }: { spinning?: boolean; className?: string; size?: number }) {
   return (
     <svg
       className={`icon-refresh${spinning ? " is-spinning" : ""} ${className}`.trim()}
-      width="14"
-      height="14"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -191,12 +191,12 @@ export function DeckHeader({
                 <button
                   type="button"
                   className="header-menu-btn header-refresh-btn"
-                  aria-label="Update deck from Moxfield"
-                  title="Update deck"
+                  aria-label={updating ? "Updating deck…" : "Update deck"}
+                  title={updating ? "Updating deck…" : "Update deck"}
                   disabled={updating}
                   onClick={onUpdate}
                 >
-                  <RefreshIcon spinning={updating} />
+                  <RefreshIcon spinning={updating} size={15} />
                 </button>
               )}
               <div className="header-menu-container">
@@ -214,19 +214,6 @@ export function DeckHeader({
                 </button>
                 {menuOpen && (
                   <div className="header-menu-dropdown">
-                    {onUpdate && deck.url && (
-                      <button
-                        type="button"
-                        disabled={updating}
-                        onClick={() => {
-                          setMenuOpen(false);
-                          onUpdate();
-                        }}
-                      >
-                        <RefreshIcon spinning={updating} />
-                        <span>{updating ? "Updating deck…" : "Update deck"}</span>
-                      </button>
-                    )}
                     <button
                       type="button"
                       onClick={() => {
@@ -340,10 +327,10 @@ export function DeckHeader({
                 className="btn-update-deck"
                 disabled={updating}
                 onClick={onUpdate}
-                title="Fetch latest cards and printings from Moxfield/Archidekt"
+                aria-label={updating ? "Updating deck…" : "Update deck"}
+                title={updating ? "Updating deck…" : "Update deck"}
               >
-                <RefreshIcon spinning={updating} />
-                <span>{updating ? "Updating…" : "Update deck"}</span>
+                <RefreshIcon spinning={updating} size={15} />
               </button>
             )}
             <button
