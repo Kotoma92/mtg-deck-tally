@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { colorLabel } from "../lib/colors";
+import { manaSymbolUrl } from "./ManaCost";
 
 const USER_KEY = "mtg-deck-tally/moxfield-user";
 
@@ -204,9 +205,33 @@ export function MoxfieldUserPicker({ busy, onSelectDeck }: Props) {
                       <span className="mox-deck-format">{deck.format}</span>
                     </div>
                     <div className="mox-deck-footer">
-                      <span className="mox-deck-meta">
-                        {label} • {deck.mainboardCount} cards
-                      </span>
+                      <div className="mox-deck-identity">
+                        <span className="mox-deck-pips" aria-label={`Colors: ${label}`}>
+                          {deck.colors.length > 0 ? (
+                            deck.colors.map((c) => (
+                              <img
+                                key={c}
+                                className="mana-pip"
+                                src={manaSymbolUrl(c)}
+                                alt={c}
+                                loading="lazy"
+                                aria-hidden="true"
+                              />
+                            ))
+                          ) : (
+                            <img
+                              className="mana-pip"
+                              src={manaSymbolUrl("C")}
+                              alt="Colorless"
+                              loading="lazy"
+                              aria-hidden="true"
+                            />
+                          )}
+                        </span>
+                        <span className="mox-deck-meta">
+                          {label} • {deck.mainboardCount} cards
+                        </span>
+                      </div>
                       {deck.lastUpdatedAtUtc && (
                         <span className="mox-deck-date">{formatDate(deck.lastUpdatedAtUtc)}</span>
                       )}

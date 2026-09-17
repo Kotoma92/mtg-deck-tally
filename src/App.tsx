@@ -7,7 +7,7 @@ import { ShoppingListModal } from "./components/ShoppingListModal";
 import { buildDeckFromUrl, finalizeDeck, prepareDeckFromText, type PreparedDeck } from "./lib/buildDeck";
 import { boardOfSection, countCards, filterCardsByBoard } from "./lib/grouping";
 import { lookupCards } from "./lib/cards";
-import { clearDeck, loadDeck, saveDeck } from "./lib/storage";
+import { loadDeck, saveDeck } from "./lib/storage";
 import type { BoardType, Deck, SortMode, ViewMode } from "./lib/types";
 
 const VIEW_STORAGE_KEY = "mtg-deck-tally/view-mode";
@@ -217,9 +217,29 @@ export default function App() {
   if (importing || !deck) {
     return (
       <div className="wrap">
-        <header className="bare-header">
-          <h1>Deck Tally</h1>
-          <p className="tagline">Check a physical deck against its list, card by card.</p>
+        <header className="landing-header">
+          <div className="landing-header-content">
+            <div>
+              <h1 className="landing-title">Deck Tally</h1>
+              <p className="landing-tagline">
+                Check a physical Magic deck against its decklist, card by card.
+              </p>
+            </div>
+            {deck !== null && (
+              <button
+                type="button"
+                className="btn-resume-deck"
+                onClick={() => {
+                  setError(undefined);
+                  setPreparedDeck(null);
+                  setImporting(false);
+                }}
+              >
+                <span>← Return to <strong>{deck.name || "current deck"}</strong></span>
+                <span className="resume-stat mono">{found} / {total} found</span>
+              </button>
+            )}
+          </div>
         </header>
         {preparedDeck ? (
           <CommanderPicker
@@ -284,8 +304,6 @@ export default function App() {
         onSubmitQuery={submitQuery}
         onReset={() => setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) })}
         onChangeDeck={() => {
-          clearDeck();
-          setDeck(null);
           setImporting(true);
         }}
         onUpdate={handleUpdateDeck}
