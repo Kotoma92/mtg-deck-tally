@@ -15,8 +15,8 @@ type Props = {
   onViewMode: (mode: ViewMode) => void;
   onSubmitQuery?: () => void;
   onReset: () => void;
-  onEdit: () => void;
-  onNew: () => void;
+  onChangeDeck: () => void;
+  onNew?: () => void;
   onUpdate?: () => void;
   updating?: boolean;
 };
@@ -45,8 +45,9 @@ function RefreshIcon({ spinning, className = "", size = 15 }: { spinning?: boole
 
 export function DeckHeader({
   deck, found, total, query, sortMode, viewMode, updating,
-  onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onEdit, onNew, onUpdate,
+  onQuery, onSortMode, onViewMode, onSubmitQuery, onReset, onChangeDeck, onNew, onUpdate,
 }: Props) {
+  const handleChangeDeck = onChangeDeck ?? onNew;
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -187,18 +188,6 @@ export function DeckHeader({
               <div className="progress-stat mono">
                 {found} / {total} <span>found</span>
               </div>
-              {onUpdate && deck.url && (
-                <button
-                  type="button"
-                  className="header-menu-btn header-refresh-btn"
-                  aria-label={updating ? "Updating deck…" : "Update deck"}
-                  title={updating ? "Updating deck…" : "Update deck"}
-                  disabled={updating}
-                  onClick={onUpdate}
-                >
-                  <RefreshIcon spinning={updating} size={15} />
-                </button>
-              )}
               <div className="header-menu-container">
                 <button
                   type="button"
@@ -229,23 +218,26 @@ export function DeckHeader({
                       type="button"
                       onClick={() => {
                         setMenuOpen(false);
-                        onEdit();
+                        handleChangeDeck?.();
                       }}
                     >
-                      Edit list
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onNew();
-                      }}
-                    >
-                      New deck
+                      Change deck
                     </button>
                   </div>
                 )}
               </div>
+              {onUpdate && deck.url && (
+                <button
+                  type="button"
+                  className="header-menu-btn header-refresh-btn"
+                  aria-label={updating ? "Updating deck…" : "Update deck"}
+                  title={updating ? "Updating deck…" : "Update deck"}
+                  disabled={updating}
+                  onClick={onUpdate}
+                >
+                  <RefreshIcon spinning={updating} size={15} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -321,6 +313,17 @@ export function DeckHeader({
             </button>
           </div>
           <div className="header-action-btns">
+            <button
+              onClick={() => {
+                if (found === 0 || window.confirm("Reset all checkmarks?")) {
+                  onReset();
+                }
+              }}
+              title="Clear all checkmarks"
+            >
+              Reset
+            </button>
+            <button onClick={handleChangeDeck}>Change deck</button>
             {onUpdate && deck.url && (
               <button
                 type="button"
@@ -333,18 +336,6 @@ export function DeckHeader({
                 <RefreshIcon spinning={updating} size={15} />
               </button>
             )}
-            <button
-              onClick={() => {
-                if (found === 0 || window.confirm("Reset all checkmarks?")) {
-                  onReset();
-                }
-              }}
-              title="Clear all checkmarks"
-            >
-              Reset
-            </button>
-            <button onClick={onEdit}>Edit list</button>
-            <button onClick={onNew}>New deck</button>
           </div>
         </div>
       </div>

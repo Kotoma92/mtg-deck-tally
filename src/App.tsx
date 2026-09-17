@@ -239,8 +239,7 @@ export default function App() {
         onViewMode={handleViewModeChange}
         onSubmitQuery={submitQuery}
         onReset={() => setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) })}
-        onEdit={() => setImporting(true)}
-        onNew={() => {
+        onChangeDeck={() => {
           clearDeck();
           setDeck(null);
           setImporting(true);
