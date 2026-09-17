@@ -7,7 +7,7 @@ import { ShoppingListModal } from "./components/ShoppingListModal";
 import { buildDeckFromUrl, finalizeDeck, prepareDeckFromText, type PreparedDeck } from "./lib/buildDeck";
 import { boardOfSection, countCards, filterCardsByBoard } from "./lib/grouping";
 import { lookupCards } from "./lib/cards";
-import { clearDeck, loadDeck, saveDeck } from "./lib/storage";
+import { loadDeck, saveDeck } from "./lib/storage";
 import type { BoardType, Deck, SortMode, ViewMode } from "./lib/types";
 
 const VIEW_STORAGE_KEY = "mtg-deck-tally/view-mode";
@@ -336,8 +336,6 @@ export default function App() {
         onSubmitQuery={submitQuery}
         onReset={() => setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) })}
         onChangeDeck={() => {
-          clearDeck();
-          setDeck(null);
           setImporting(true);
         }}
         onUpdate={handleUpdateDeck}
