@@ -214,37 +214,38 @@ export default function App() {
   }
 
   function markCard(name: string, delta: number, scryfallId?: string, isUndo = false) {
+    if (!deck) return;
+    const target = deck.cards.find(
+      (card) => card.name === name && (!scryfallId || card.info?.scryfallId === scryfallId),
+    );
+    if (!target) return;
+
+    const newFound = Math.max(0, Math.min(target.qty, target.found + delta));
+    const actualDelta = newFound - target.found;
+    if (actualDelta === 0) return;
+
+    if (!isUndo) {
+      setUndoStack((prev) => [
+        ...prev.slice(-29),
+        { name: target.name, delta: actualDelta, scryfallId: target.info?.scryfallId },
+      ]);
+      setToast({
+        id: Date.now(),
+        message: actualDelta > 0 ? `Found: ${target.name}` : `Unchecked: ${target.name}`,
+        cardName: target.name,
+        actionType: actualDelta > 0 ? "found" : "unfound",
+      });
+    } else {
+      setToast({
+        id: Date.now(),
+        message: `Undid: ${target.name}`,
+        cardName: target.name,
+        actionType: "undone",
+      });
+    }
+
     setDeck((current) => {
       if (!current) return current;
-      const target = current.cards.find(
-        (card) => card.name === name && (!scryfallId || card.info?.scryfallId === scryfallId),
-      );
-      if (!target) return current;
-
-      const newFound = Math.max(0, Math.min(target.qty, target.found + delta));
-      const actualDelta = newFound - target.found;
-      if (actualDelta === 0) return current;
-
-      if (!isUndo) {
-        setUndoStack((prev) => [
-          ...prev.slice(-29),
-          { name: target.name, delta: actualDelta, scryfallId: target.info?.scryfallId },
-        ]);
-        setToast({
-          id: Date.now(),
-          message: actualDelta > 0 ? `Found: ${target.name}` : `Unchecked: ${target.name}`,
-          cardName: target.name,
-          actionType: actualDelta > 0 ? "found" : "unfound",
-        });
-      } else {
-        setToast({
-          id: Date.now(),
-          message: `Undid: ${target.name}`,
-          cardName: target.name,
-          actionType: "undone",
-        });
-      }
-
       return {
         ...current,
         cards: current.cards.map((card) =>
@@ -257,13 +258,11 @@ export default function App() {
   }
 
   const handleUndo = useCallback(() => {
-    setUndoStack((prev) => {
-      if (prev.length === 0) return prev;
-      const last = prev[prev.length - 1];
-      markCard(last.name, -last.delta, last.scryfallId, true);
-      return prev.slice(0, -1);
-    });
-  }, []);
+    if (undoStack.length === 0 || !deck) return;
+    const last = undoStack[undoStack.length - 1];
+    setUndoStack((prev) => prev.slice(0, -1));
+    markCard(last.name, -last.delta, last.scryfallId, true);
+  }, [undoStack, deck]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
