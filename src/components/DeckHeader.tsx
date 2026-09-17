@@ -57,7 +57,7 @@ export function DeckHeader({
   const remaining = total - found;
   const [broken, setBroken] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<"compact" | "desktop" | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
   const mainCards = useMemo(() => deck.cards.filter((c) => boardOfSection(c.section) === "main"), [deck.cards]);
@@ -88,15 +88,22 @@ export function DeckHeader({
   }, []);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!openMenu) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenu(null);
+    };
     const handleClickOutside = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest(".header-menu-container")) {
-        setMenuOpen(false);
+        setOpenMenu(null);
       }
     };
+    window.addEventListener("keydown", handleKeyDown);
     document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [menuOpen]);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [openMenu]);
 
   // A card with no art on Scryfall shouldn't leave a broken image in the banner.
   const art = deck.commanders.filter((name) => !broken.includes(name));
@@ -228,21 +235,21 @@ export function DeckHeader({
                   type="button"
                   className="header-menu-btn"
                   aria-label="More actions"
-                  aria-expanded={menuOpen}
+                  aria-expanded={openMenu === "compact"}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setMenuOpen((prev) => !prev);
+                    setOpenMenu((prev) => (prev === "compact" ? null : "compact"));
                   }}
                 >
                   ⋯
                 </button>
-                {menuOpen && (
+                {openMenu === "compact" && (
                   <div className="header-menu-dropdown">
                     {canUndo && onUndo && (
                       <button
                         type="button"
                         onClick={() => {
-                          setMenuOpen(false);
+                          setOpenMenu(null);
                           onUndo();
                         }}
                       >
@@ -252,7 +259,7 @@ export function DeckHeader({
                     <button
                       type="button"
                       onClick={() => {
-                        setMenuOpen(false);
+                        setOpenMenu(null);
                         onOpenShoppingList();
                       }}
                     >
@@ -261,7 +268,7 @@ export function DeckHeader({
                     <button
                       type="button"
                       onClick={() => {
-                        setMenuOpen(false);
+                        setOpenMenu(null);
                         if (found === 0 || window.confirm("Reset all checkmarks?")) {
                           onReset();
                         }
@@ -272,7 +279,7 @@ export function DeckHeader({
                     <button
                       type="button"
                       onClick={() => {
-                        setMenuOpen(false);
+                        setOpenMenu(null);
                         onChangeDeck();
                       }}
                     >
@@ -433,22 +440,22 @@ export function DeckHeader({
                 type="button"
                 className="header-menu-btn"
                 aria-label="More actions"
-                aria-expanded={menuOpen}
+                aria-expanded={openMenu === "desktop"}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setMenuOpen((prev) => !prev);
+                  setOpenMenu((prev) => (prev === "desktop" ? null : "desktop"));
                 }}
                 title="More actions"
               >
                 ⋯
               </button>
-              {menuOpen && (
+              {openMenu === "desktop" && (
                 <div className="header-menu-dropdown">
                   {canUndo && onUndo && (
                     <button
                       type="button"
                       onClick={() => {
-                        setMenuOpen(false);
+                        setOpenMenu(null);
                         onUndo();
                       }}
                     >
@@ -458,7 +465,7 @@ export function DeckHeader({
                   <button
                     type="button"
                     onClick={() => {
-                      setMenuOpen(false);
+                      setOpenMenu(null);
                       onOpenShoppingList();
                     }}
                   >

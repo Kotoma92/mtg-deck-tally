@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export type ToastInfo = {
   id: number;
@@ -15,13 +15,16 @@ type Props = {
 };
 
 export function UndoToast({ toast, canUndo, onUndo, onDismiss }: Props) {
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => {
-      onDismiss();
+      onDismissRef.current();
     }, 4000);
     return () => clearTimeout(timer);
-  }, [toast, onDismiss]);
+  }, [toast]);
 
   if (!toast) return null;
 

@@ -17,6 +17,7 @@ type UndoEntry = {
   name: string;
   delta: number;
   scryfallId?: string;
+  section?: string;
 };
 
 const VIEW_STORAGE_KEY = "mtg-deck-tally/view-mode";
@@ -157,7 +158,7 @@ export default function App() {
       setReady(true);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deck?.name]);
+  }, [deck?.url ?? deck?.rawText ?? deck?.name]);
 
   const [updating, setUpdating] = useState(false);
 
@@ -213,10 +214,13 @@ export default function App() {
     }
   }
 
-  function markCard(name: string, delta: number, scryfallId?: string, isUndo = false) {
+  function markCard(name: string, delta: number, scryfallId?: string, section?: string, isUndo = false) {
     if (!deck) return;
     const target = deck.cards.find(
-      (card) => card.name === name && (!scryfallId || card.info?.scryfallId === scryfallId),
+      (card) =>
+        card.name.toLowerCase() === name.toLowerCase() &&
+        (!scryfallId || card.info?.scryfallId === scryfallId) &&
+        (!section || card.section === section),
     );
     if (!target) return;
 
@@ -227,7 +231,7 @@ export default function App() {
     if (!isUndo) {
       setUndoStack((prev) => [
         ...prev.slice(-29),
-        { name: target.name, delta: actualDelta, scryfallId: target.info?.scryfallId },
+        { name: target.name, delta: actualDelta, scryfallId: target.info?.scryfallId, section: target.section },
       ]);
       setToast({
         id: Date.now(),
@@ -249,7 +253,10 @@ export default function App() {
       return {
         ...current,
         cards: current.cards.map((card) =>
-          card.name === name && (!scryfallId || card.info?.scryfallId === scryfallId)
+          card === target ||
+          (card.name.toLowerCase() === name.toLowerCase() &&
+            (!scryfallId || card.info?.scryfallId === scryfallId) &&
+            (!section || card.section === section))
             ? { ...card, found: newFound }
             : card,
         ),
@@ -261,8 +268,11 @@ export default function App() {
     if (undoStack.length === 0 || !deck) return;
     const last = undoStack[undoStack.length - 1];
     setUndoStack((prev) => prev.slice(0, -1));
-    markCard(last.name, -last.delta, last.scryfallId, true);
+    markCard(last.name, -last.delta, last.scryfallId, last.section, true);
   }, [undoStack, deck]);
+
+  const handleUndoRef = useRef(handleUndo);
+  handleUndoRef.current = handleUndo;
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -297,14 +307,14 @@ export default function App() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
         if (isInput) return;
         e.preventDefault();
-        handleUndo();
+        handleUndoRef.current();
         return;
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleUndo]);
+  }, []);
 
   function submitQuery() {
     const needle = query.trim().toLowerCase();
@@ -313,7 +323,7 @@ export default function App() {
       (c) => c.found < c.qty && c.name.toLowerCase().includes(needle),
     );
     if (activeMatch) {
-      markCard(activeMatch.name, 1, activeMatch.info?.scryfallId);
+      markCard(activeMatch.name, 1, activeMatch.info?.scryfallId, activeMatch.section);
       setQuery("");
       return;
     }
@@ -325,10 +335,12 @@ export default function App() {
       if (activeBoard !== "all" && activeBoard !== matchBoard) {
         setActiveBoard(matchBoard);
       }
-      markCard(anyMatch.name, 1, anyMatch.info?.scryfallId);
+      markCard(anyMatch.name, 1, anyMatch.info?.scryfallId, anyMatch.section);
       setQuery("");
     }
   }
+
+  const handleDismissToast = useCallback(() => setToast(null), []);
 
   if (importing || !deck) {
     return (
@@ -473,7 +485,7 @@ export default function App() {
         toast={toast}
         canUndo={undoStack.length > 0}
         onUndo={handleUndo}
-        onDismiss={() => setToast(null)}
+        onDismiss={handleDismissToast}
       />
     </div>
   );
