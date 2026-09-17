@@ -271,25 +271,26 @@ export default function App() {
       const isInput =
         target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
 
+      function focusSearchInput() {
+        const inputs = Array.from(document.querySelectorAll<HTMLInputElement>("input.search-input"));
+        const visible = inputs.find((el) => el.offsetParent !== null) || inputs[0];
+        if (visible) {
+          visible.focus();
+          visible.select();
+        }
+      }
+
       // Ctrl+F or Cmd+F: Global search
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
         e.preventDefault();
-        const searchInput = document.getElementById("card-search-input") as HTMLInputElement | null;
-        if (searchInput) {
-          searchInput.focus();
-          searchInput.select();
-        }
+        focusSearchInput();
         return;
       }
 
       // '/' quick-search hotkey when not in input
       if (e.key === "/" && !isInput && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
-        const searchInput = document.getElementById("card-search-input") as HTMLInputElement | null;
-        if (searchInput) {
-          searchInput.focus();
-          searchInput.select();
-        }
+        focusSearchInput();
         return;
       }
 

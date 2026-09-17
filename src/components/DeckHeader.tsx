@@ -349,17 +349,21 @@ export function DeckHeader({
             <input
               type="search"
               className="search-input desktop-search-input"
-            value={query}
-            onChange={(event) => onQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && onSubmitQuery) {
-                event.preventDefault();
-                onSubmitQuery();
-              }
-            }}
-            placeholder="Jump to a card… (Enter to check)"
-            autoComplete="off"
-          />
+              value={query}
+              onChange={(event) => onQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && onSubmitQuery) {
+                  event.preventDefault();
+                  onSubmitQuery();
+                } else if (event.key === "Escape") {
+                  event.preventDefault();
+                  onQuery("");
+                  event.currentTarget.blur();
+                }
+              }}
+              placeholder="Jump to a card… (Ctrl+F / Enter to check)"
+              autoComplete="off"
+            />
           <div className="segmented sort-toggle" role="group" aria-label="Sort and group cards by">
             <button
               aria-pressed={sortMode === "alpha"}
