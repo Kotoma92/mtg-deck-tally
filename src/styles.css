@@ -1094,12 +1094,19 @@ textarea {
   align-items: center;
 }
 
-.header-action-btns button {
+.header-action-btns > button,
+.header-action-btns .header-menu-btn {
   height: 37px;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.header-action-btns .header-menu-btn {
+  width: 37px;
+  padding: 0;
+  border-radius: 7px;
 }
 
 .compact-deck-info {
@@ -1445,15 +1452,6 @@ textarea {
   color: var(--accent);
 }
 
-.btn-shopping-list {
-  gap: 6px;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.btn-shopping-list:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
 
 /* ---------- shopping list modal ---------- */
 

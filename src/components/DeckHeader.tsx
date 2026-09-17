@@ -396,14 +396,6 @@ export function DeckHeader({
           </div>
           <div className="header-action-btns">
             <button
-              type="button"
-              className="btn-shopping-list"
-              onClick={onOpenShoppingList}
-              title="View and export missing cards"
-            >
-              🛒 Missing {missingCount > 0 ? `(${missingCount})` : ""}
-            </button>
-            <button
               onClick={() => {
                 if (found === 0 || window.confirm("Reset all checkmarks?")) {
                   onReset();
@@ -414,6 +406,34 @@ export function DeckHeader({
               Reset
             </button>
             <button onClick={onChangeDeck}>Change deck</button>
+            <div className="header-menu-container">
+              <button
+                type="button"
+                className="header-menu-btn"
+                aria-label="More actions"
+                aria-expanded={menuOpen}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen((prev) => !prev);
+                }}
+                title="More actions"
+              >
+                ⋯
+              </button>
+              {menuOpen && (
+                <div className="header-menu-dropdown">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onOpenShoppingList();
+                    }}
+                  >
+                    Shopping list {missingCount > 0 ? `(${missingCount} missing)` : ""}
+                  </button>
+                </div>
+              )}
+            </div>
             {onUpdate && deck.url && (
               <button
                 type="button"
