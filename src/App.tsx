@@ -217,60 +217,28 @@ export default function App() {
   if (importing || !deck) {
     return (
       <div className="wrap">
-        <header className="landing-hero">
-          <div className="header-art" aria-hidden="true">
-            <img
-              src="/api/card-image?version=art_crop&name=Command+Tower"
-              alt=""
-              loading="eager"
-            />
-          </div>
-          <div className="header-inner">
-            <div className="landing-hero-content">
-              <div className="landing-brand">
-                <div className="landing-icon-badge">
-                  <img src="/icon.svg" alt="Deck Tally logo" className="landing-logo-icon" />
-                </div>
-                <div>
-                  <h1 className="landing-title">Deck Tally</h1>
-                  <p className="landing-tagline">
-                    Check a physical Magic deck against its decklist, card by card.
-                  </p>
-                </div>
-              </div>
-
-              <div className="landing-badges">
-                <div className="landing-badge-chip">
-                  <span className="badge-icon">⚡</span>
-                  <span className="badge-text">Zero Rate-Limit CDN</span>
-                </div>
-                <div className="landing-badge-chip">
-                  <span className="badge-icon">⚔️</span>
-                  <span className="badge-text">Commander & Boards</span>
-                </div>
-                <div className="landing-badge-chip">
-                  <span className="badge-icon">📱</span>
-                  <span className="badge-text">PWA & Offline Ready</span>
-                </div>
-              </div>
-
-              {deck !== null && (
-                <div className="landing-resume-bar">
-                  <button
-                    type="button"
-                    className="btn-resume-deck"
-                    onClick={() => {
-                      setError(undefined);
-                      setPreparedDeck(null);
-                      setImporting(false);
-                    }}
-                  >
-                    <span>← Resume checking <strong>{deck.name || "current deck"}</strong></span>
-                    <span className="resume-stat mono">{found} / {total} found</span>
-                  </button>
-                </div>
-              )}
+        <header className="landing-header">
+          <div className="landing-header-content">
+            <div>
+              <h1 className="landing-title">Deck Tally</h1>
+              <p className="landing-tagline">
+                Check a physical Magic deck against its decklist, card by card.
+              </p>
             </div>
+            {deck !== null && (
+              <button
+                type="button"
+                className="btn-resume-deck"
+                onClick={() => {
+                  setError(undefined);
+                  setPreparedDeck(null);
+                  setImporting(false);
+                }}
+              >
+                <span>← Return to <strong>{deck.name || "current deck"}</strong></span>
+                <span className="resume-stat mono">{found} / {total} found</span>
+              </button>
+            )}
           </div>
         </header>
         {preparedDeck ? (

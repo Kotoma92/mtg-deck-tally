@@ -52,15 +52,15 @@ export function ImportPanel({ initialText, busy, error, canCancel, onPaste, onLi
 
   return (
     <section className="import-panel">
-      <div className="tabs landing-tabs" role="tablist">
+      <div className="tabs" role="tablist">
         <button role="tab" aria-selected={mode === "moxfield"} onClick={() => setMode("moxfield")}>
-          <span className="tab-icon">🎴</span> Moxfield decks
+          Moxfield decks
         </button>
         <button role="tab" aria-selected={mode === "link"} onClick={() => setMode("link")}>
-          <span className="tab-icon">🔗</span> From a link
+          From a link
         </button>
         <button role="tab" aria-selected={mode === "paste"} onClick={() => setMode("paste")}>
-          <span className="tab-icon">📋</span> Paste a list
+          Paste a list
         </button>
       </div>
 
