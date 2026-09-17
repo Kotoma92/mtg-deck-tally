@@ -13,6 +13,39 @@ npm run dev      # also serves /api/deck, so link imports work locally
 npm run build    # tsc --noEmit && vite build
 ```
 
+## Branching & Deployment Strategy
+
+**Never commit directly to `main`. Never deploy directly to production.**
+Production (`https://tally.rolandtech.org`) must strictly match `main`, and changes must undergo Quality Control (QC) on Staging (Beta: `https://beta.tally.rolandtech.org`) before reaching production.
+
+### 1. Always branch from `main`
+Before starting work on any feature, fix, or refactor:
+```bash
+git checkout main
+git pull origin main
+git checkout -b <type>/<short-description>
+# Examples: feat/filter-layout, fix/banner-flicker, chore/upgrade-deps
+```
+
+### 2. QC on Staging (Beta First)
+- Test locally first: `npm run build` and `npm run dev`.
+- Push the branch to GitHub and open a Pull Request targeting `main`:
+  ```bash
+  git push -u origin <branch-name>
+  "/c/Program Files/GitHub CLI/gh.exe" pr create --fill
+  ```
+- **Automated Staging Deploy**: Opening or updating a PR triggers GitHub Actions (`.github/workflows/deploy.yml`) to automatically build and deploy the branch to **Staging (Beta)** at:
+  **`https://beta.tally.rolandtech.org`**
+- The action posts/updates a sticky comment on the PR with the preview link and commit SHA.
+- **Do not merge yet**: Test and QC the live changes on `beta.tally.rolandtech.org`. If fixes are needed, push additional commits to the branch (each push automatically refreshes staging). Request user review/feedback.
+
+### 3. Production Deployment (On PR Merge)
+- Once Quality Control (QC) is satisfied and the PR is approved by the user:
+  - Merge the PR into `main` (via GitHub UI or `gh pr merge --squash` / `gh pr merge --merge`).
+  - The push to `main` triggers GitHub Actions to automatically deploy to **Production** at:
+    **`https://tally.rolandtech.org`**
+  - The workflow also redeploys staging so beta stays synced with latest production when no PRs are active.
+
 ## Layout
 
 | Path | What it is |
@@ -96,9 +129,11 @@ worker and wasm are loaded as separate `?url` imports, so pre-bundling is safe.
 ## State as of this writing
 
 - Hosting: **Live on Cloudflare Workers with Static Assets** at
-  `https://tally.rolandtech.org` (Worker service `mtg-deck-tally`). Configured via
-  `wrangler.json` and `src/worker.ts` with `run_worker_first: true`. Deploy via:
-  `npm run deploy` (requires `CLOUDFLARE_API_TOKEN`).
+  Production: `https://tally.rolandtech.org` (Worker `mtg-deck-tally`) and
+  Staging: `https://beta.tally.rolandtech.org` (Worker `mtg-deck-tally-staging`).
+  Configured via `wrangler.json` and `src/worker.ts` with `run_worker_first: true`.
+  Automated deployments via GitHub Actions (`.github/workflows/deploy.yml`):
+  PRs deploy to staging, merges to `main` deploy to production.
 - **Moxfield links work in production!** While Node gets 403 HTML challenges
   from Cloudflare bot protection, Cloudflare Workers' network path reaches
   Moxfield's API without issue.

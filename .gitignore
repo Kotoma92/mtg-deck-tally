@@ -6,3 +6,9 @@ dist/
 # Scryfall bulk export: ~180MB, re-downloadable via scripts/build_db.py.
 # The built index (public/cards.db) IS committed -- the app ships with it.
 data/
+
+# Private keys & secrets
+*.pem
+*.key
+.env*
+github-app-*.json
