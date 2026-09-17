@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cardArtUrl } from "../lib/cards";
 import { colorLabel } from "../lib/colors";
 import type { ColumnLayout, Deck, SortMode } from "../lib/types";
@@ -27,14 +27,20 @@ export function DeckHeader({
   const [broken, setBroken] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onScroll = () => {
-      const scrolled = window.scrollY > 40;
-      setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const el = heroRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        setIsScrolled(!entry.isIntersecting);
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -53,138 +59,160 @@ export function DeckHeader({
   const markBroken = (name: string) => setBroken((current) => [...current, name]);
 
   return (
-    <header className={isScrolled ? "header-scrolled" : undefined}>
-      {art.length > 0 && (
-        <div className="header-art" aria-hidden>
-          {art.map((name) => (
-            <img key={name} src={cardArtUrl(name)} alt="" onError={() => markBroken(name)} />
-          ))}
-        </div>
-      )}
-
-      <div className="header-inner">
-        {/* Compact header shown on mobile when scrolled */}
-        <div className="compact-header">
-          <div className="compact-deck-info">
-            {deck.name && (
-              <span className="compact-deck-name" title={deck.name}>
-                {deck.name}
-              </span>
-            )}
-            {deck.commanders.length > 0 && (
-              <span className="compact-commander" title={deck.commanders.join(" + ")}>
-                <span className="commander-symbol">⌘</span> {deck.commanders.join(" + ")}
-              </span>
-            )}
+    <header className="deck-header">
+      <div className="deck-hero" ref={heroRef}>
+        {art.length > 0 && (
+          <div className="header-art" aria-hidden>
+            {art.map((name) => (
+              <img key={name} src={cardArtUrl(name)} alt="" onError={() => markBroken(name)} />
+            ))}
           </div>
-          <div className="compact-right">
-            <div className="progress-stat mono">
+        )}
+
+        <div className="header-inner">
+          <div className="title-row">
+            <div>
+              <h1>Deck Tally</h1>
+              <p className="tagline">
+                {remaining === 0
+                  ? "Every card accounted for."
+                  : `${remaining} card${remaining === 1 ? "" : "s"} left to find.`}
+              </p>
+            </div>
+            <div className="progress-stat mono hero-stat">
               {found} / {total} <span>found</span>
             </div>
-            <div className="header-menu-container">
-              <button
-                type="button"
-                className="header-menu-btn"
-                aria-label="More actions"
-                aria-expanded={menuOpen}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuOpen((prev) => !prev);
-                }}
-              >
-                ⋯
-              </button>
-              {menuOpen && (
-                <div className="header-menu-dropdown">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      if (found === 0 || window.confirm("Reset all checkmarks?")) {
-                        onReset();
-                      }
-                    }}
-                  >
-                    Reset checkmarks
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onEdit();
-                    }}
-                  >
-                    Edit list
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onNew();
-                    }}
-                  >
-                    New deck
-                  </button>
-                </div>
+          </div>
+
+          <div className="deck-meta">
+            {art.map((name) => (
+              <img
+                key={name}
+                className="commander-thumb"
+                src={cardArtUrl(name)}
+                alt={name}
+                title={name}
+                onError={() => markBroken(name)}
+              />
+            ))}
+            <div className="deck-meta-text">
+              {deck.name && (
+                <span className="deck-name">
+                  {deck.url ? (
+                    <a href={deck.url} target="_blank" rel="noreferrer noopener">
+                      {deck.name}
+                    </a>
+                  ) : (
+                    deck.name
+                  )}
+                </span>
+              )}
+              {deck.commanders.length > 0 && (
+                <span className="commander">
+                  {deck.commanders.join(" + ")}
+                  <span className="identity">{colorLabel(deck.colors)}</span>
+                </span>
               )}
             </div>
           </div>
-        </div>
 
-        <div className="title-row">
-          <div>
-            <h1>Deck Tally</h1>
-            <p className="tagline">
-              {remaining === 0
-                ? "Every card accounted for."
-                : `${remaining} card${remaining === 1 ? "" : "s"} left to find.`}
-            </p>
-          </div>
-          <div className="progress-stat mono">
-            {found} / {total} <span>found</span>
-          </div>
-        </div>
-
-        <div className="progress-rail">
-          <div className="progress-fill" style={{ width: total ? `${(found / total) * 100}%` : 0 }} />
-        </div>
-
-        <div className="deck-meta">
-          {art.map((name) => (
-            <img
-              key={name}
-              className="commander-thumb"
-              src={cardArtUrl(name)}
-              alt={name}
-              title={name}
-              onError={() => markBroken(name)}
+          <div className="hero-search-row">
+            <input
+              type="search"
+              className="search-input"
+              value={query}
+              onChange={(event) => onQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && onSubmitQuery) {
+                  event.preventDefault();
+                  onSubmitQuery();
+                }
+              }}
+              placeholder="Jump to a card… (Enter to check)"
+              autoComplete="off"
             />
-          ))}
-          <div className="deck-meta-text">
-            {deck.name && (
-              <span className="deck-name">
-                {deck.url ? (
-                  <a href={deck.url} target="_blank" rel="noreferrer noopener">
-                    {deck.name}
-                  </a>
-                ) : (
-                  deck.name
-                )}
-              </span>
-            )}
-            {deck.commanders.length > 0 && (
-              <span className="commander">
-                {deck.commanders.join(" + ")}
-                <span className="identity">{colorLabel(deck.colors)}</span>
-              </span>
-            )}
           </div>
         </div>
+      </div>
 
-        <div className="controls-row">
-          <input
-            type="search"
-            className="search-input"
+      <div className="sticky-bar">
+        <div className="header-inner">
+          {/* Compact header shown on mobile when scrolled */}
+          <div className="compact-header">
+            <div className={`compact-deck-info ${isScrolled ? "visible" : ""}`}>
+              {deck.name && (
+                <span className="compact-deck-name" title={deck.name}>
+                  {deck.name}
+                </span>
+              )}
+              {deck.commanders.length > 0 && (
+                <span className="compact-commander" title={deck.commanders.join(" + ")}>
+                  <span className="commander-symbol">⌘</span> {deck.commanders.join(" + ")}
+                </span>
+              )}
+            </div>
+            <div className="compact-right">
+              <div className="progress-stat mono">
+                {found} / {total} <span>found</span>
+              </div>
+              <div className="header-menu-container">
+                <button
+                  type="button"
+                  className="header-menu-btn"
+                  aria-label="More actions"
+                  aria-expanded={menuOpen}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen((prev) => !prev);
+                  }}
+                >
+                  ⋯
+                </button>
+                {menuOpen && (
+                  <div className="header-menu-dropdown">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (found === 0 || window.confirm("Reset all checkmarks?")) {
+                          onReset();
+                        }
+                      }}
+                    >
+                      Reset checkmarks
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onEdit();
+                      }}
+                    >
+                      Edit list
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onNew();
+                      }}
+                    >
+                      New deck
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="progress-rail">
+            <div className="progress-fill" style={{ width: total ? `${(found / total) * 100}%` : 0 }} />
+          </div>
+
+          <div className="controls-row">
+            <input
+              type="search"
+              className="search-input desktop-search-input"
             value={query}
             onChange={(event) => onQuery(event.target.value)}
             onKeyDown={(event) => {
@@ -275,6 +303,7 @@ export function DeckHeader({
           </div>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
   );
 }

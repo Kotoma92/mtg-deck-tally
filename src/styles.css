@@ -43,6 +43,7 @@ body {
   /* The full-bleed banner is wider than the column; clip rather than scroll.
      `clip` (not `hidden`) leaves the sticky header working. */
   overflow-x: clip;
+  overflow-anchor: none;
 }
 
 .wrap {
@@ -942,7 +943,8 @@ textarea {
 
 /* ---------- compact scrolled header (mobile) ---------- */
 
-.compact-header {
+.compact-header,
+.hero-search-row {
   display: none;
 }
 
@@ -1069,25 +1071,88 @@ textarea {
 }
 
 @media (max-width: 768px) {
+  /* On mobile, header acts as contents so deck-hero scrolls away and sticky-bar sticks */
+  header.deck-header {
+    display: contents;
+  }
+
+  .deck-hero {
+    position: relative;
+    padding: 20px 0 12px;
+  }
+
+  .deck-hero:has(.header-art) {
+    padding-top: 76px;
+  }
+
+  .deck-hero .hero-stat {
+    display: none;
+  }
+
+  .hero-search-row {
+    display: block;
+    margin-top: 12px;
+  }
+
+  .hero-search-row .search-input {
+    width: 100%;
+  }
+
+  .sticky-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--paper);
+    background-image: var(--grain);
+    background-size: 140px 140px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .compact-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 28px;
+  }
+
+  .compact-deck-info {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .compact-deck-info.visible {
+    opacity: 1;
+  }
+
+  .sticky-bar .progress-rail {
+    margin-top: 6px;
+    height: 4px;
+  }
+
+  .controls-row {
+    margin-top: 6px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .desktop-search-input {
+    display: none !important;
+  }
+
+  .header-action-btns {
+    display: none !important;
+  }
+
   /* Hide row/column toggle on mobile */
   .layout-toggle {
     display: none !important;
   }
 
-  .label-full {
-    display: none;
-  }
-
-  .label-short {
-    display: inline;
-  }
-
-  .controls-row {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
   .controls-row .sort-toggle {
+    width: 100%;
+    display: flex;
     flex: 1 1 auto;
   }
 
@@ -1098,51 +1163,12 @@ textarea {
     font-size: 0.82rem;
   }
 
-  /* When scrolled down on mobile, compress header */
-  header.header-scrolled {
-    padding: 8px 0 8px !important;
+  .label-full {
+    display: none;
   }
 
-  header.header-scrolled:has(.header-art) {
-    padding-top: 8px !important;
-  }
-
-  header.header-scrolled .header-art {
-    opacity: 0.15;
-  }
-
-  header.header-scrolled .title-row,
-  header.header-scrolled .deck-meta,
-  header.header-scrolled .search-input,
-  header.header-scrolled .header-action-btns {
-    display: none !important;
-  }
-
-  header.header-scrolled .compact-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  header.header-scrolled .progress-rail {
-    margin-top: 5px;
-    height: 4px;
-  }
-
-  header.header-scrolled .controls-row {
-    margin-top: 6px;
-  }
-
-  header.header-scrolled .controls-row .sort-toggle {
-    width: 100%;
-    display: flex;
-  }
-
-  header.header-scrolled .controls-row .sort-toggle button {
-    flex: 1;
-    padding: 6px 8px;
-    font-size: 0.82rem;
+  .label-short {
+    display: inline;
   }
 }
 
