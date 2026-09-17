@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import { outsideIdentity } from "../lib/colors";
 import { countCards, groupCards } from "../lib/grouping";
 import type { Deck, DeckCard, SortMode, ViewMode } from "../lib/types";
@@ -12,17 +13,45 @@ type Props = {
   onMark: (name: string, delta: number) => void;
 };
 
-function chunkArray<T>(arr: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
-  }
-  return chunks;
+function useGridColumnCount() {
+  const measureRef = useRef<HTMLDivElement>(null);
+  const [cols, setCols] = useState(() => {
+    if (typeof window === "undefined") return 4;
+    const w = Math.min(1560, window.innerWidth) - 32;
+    if (w <= 360) return 2;
+    if (w <= 600) return Math.max(1, Math.floor((w + 8) / (130 + 8)));
+    return Math.max(1, Math.floor((w + 14) / (175 + 14)));
+  });
+
+  useLayoutEffect(() => {
+    const el = measureRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const comp = window.getComputedStyle(el).gridTemplateColumns;
+      if (comp) {
+        const count = comp.split(" ").filter(Boolean).length;
+        if (count > 0) setCols(count);
+      }
+    };
+
+    measure();
+
+    const observer = new ResizeObserver(() => {
+      measure();
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return { measureRef, cols };
 }
 
 export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
   const needle = query.trim().toLowerCase();
   const groups = groupCards(deck.cards, sortMode);
+  const { measureRef, cols } = useGridColumnCount();
 
   const visibleGroups = groups
     .map((group) => {
@@ -62,23 +91,18 @@ export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
     }
 
     if (viewMode === "stacked") {
-      const piles = chunkArray(cards, 5);
       return (
         <div className="visual-stacked-grid">
-          {piles.map((pile, pileIdx) => (
-            <div className="visual-stack" key={pileIdx}>
-              {pile.map((card) => (
-                <VisualCard
-                  key={card.name}
-                  card={card}
-                  stacked
-                  done={isDone}
-                  illegal={!isDone && !!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
-                  onMark={() => onMark(card.name, isDone ? -card.qty : 1)}
-                  onUndo={() => onMark(card.name, isDone ? -card.qty : -1)}
-                />
-              ))}
-            </div>
+          {cards.map((card, idx) => (
+            <VisualCard
+              key={card.name}
+              card={card}
+              stacked={idx >= cols}
+              done={isDone}
+              illegal={!isDone && !!card.info && outsideIdentity(card.info.colorIdentity, deck.colors)}
+              onMark={() => onMark(card.name, isDone ? -card.qty : 1)}
+              onUndo={() => onMark(card.name, isDone ? -card.qty : -1)}
+            />
           ))}
         </div>
       );
@@ -103,6 +127,22 @@ export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
 
   return (
     <>
+      <div
+        ref={measureRef}
+        className="visual-stacked-grid"
+        style={{
+          visibility: "hidden",
+          position: "absolute",
+          pointerEvents: "none",
+          width: "100%",
+          height: 0,
+          overflow: "hidden",
+          margin: 0,
+          padding: 0,
+          border: "none",
+        }}
+        aria-hidden
+      />
       {visibleGroups.map((group) => {
         const { found, total } = countCards(group.cards);
         return (
