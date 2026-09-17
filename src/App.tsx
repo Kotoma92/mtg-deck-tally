@@ -48,13 +48,26 @@ export default function App() {
   useEffect(() => {
     if (deck) saveDeck(deck);
   }, [deck]);
+  // Ensure all cards have scryfallId before rendering to avoid rate‑limited name lookups.
+  // Keyed on deck.name so this only re-runs when a *different* deck is loaded, not on every card mark.
+  const [ready, setReady] = useState<boolean>(() => {
+    const initial = loadDeck();
+    if (!initial) return false;
+    return !initial.cards.some((c) => c.info && !c.info.scryfallId);
+  });
 
-  // If cards in stored deck lack scryfallId, enrich them in background so direct CDN images load
   useEffect(() => {
-    if (!deck) return;
+    if (!deck) {
+      setReady(false);
+      return;
+    }
     const needsEnrichment = deck.cards.some((c) => c.info && !c.info.scryfallId);
-    if (!needsEnrichment) return;
-
+    if (!needsEnrichment) {
+      setReady(true);
+      return;
+    }
+    // Deck came from localStorage without scryfallIds — enrich before showing images.
+    setReady(false);
     lookupCards(deck.cards.map((c) => c.name)).then((cardMap) => {
       setDeck((current) => {
         if (!current) return current;
@@ -66,7 +79,9 @@ export default function App() {
           }),
         };
       });
+      setReady(true);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deck?.name]);
 
   const { found, total } = useMemo(() => countCards(deck?.cards ?? []), [deck]);
@@ -75,7 +90,9 @@ export default function App() {
     setBusy(true);
     setError(undefined);
     try {
-      setDeck(await build());
+      const built = await build();
+      setDeck(built);
+      setReady(true);
       setImporting(false);
       setPreparedDeck(null);
       setQuery("");
@@ -94,6 +111,7 @@ export default function App() {
       const prep = await prepareDeckFromText(text, deck);
       if (prep.eligibleCommanders.length === 0) {
         setDeck(finalizeDeck(prep, []));
+        setReady(true);
         setImporting(false);
         setPreparedDeck(null);
         setQuery("");
@@ -148,6 +166,7 @@ export default function App() {
             onConfirm={(commanders) => {
               const finalDeck = finalizeDeck(preparedDeck, commanders);
               setDeck(finalDeck);
+              setReady(true);
               setPreparedDeck(null);
               setImporting(false);
               setQuery("");
@@ -171,6 +190,15 @@ export default function App() {
             }}
           />
         )}
+      </div>
+    );
+  }
+
+  // Wait for ID enrichment before showing card images to avoid rate‑limited name lookups.
+  if (!ready) {
+    return (
+      <div className="wrap layout-auto">
+        <p style={{ padding: "2rem", textAlign: "center", opacity: 0.5 }}>Loading deck…</p>
       </div>
     );
   }
