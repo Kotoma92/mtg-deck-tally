@@ -3,11 +3,12 @@ import { CardList } from "./components/CardList";
 import { CommanderPicker } from "./components/CommanderPicker";
 import { DeckHeader } from "./components/DeckHeader";
 import { ImportPanel } from "./components/ImportPanel";
+import { ShoppingListModal } from "./components/ShoppingListModal";
 import { buildDeckFromUrl, finalizeDeck, prepareDeckFromText, type PreparedDeck } from "./lib/buildDeck";
-import { countCards } from "./lib/grouping";
+import { boardOfSection, countCards, filterCardsByBoard } from "./lib/grouping";
 import { lookupCards } from "./lib/cards";
 import { clearDeck, loadDeck, saveDeck } from "./lib/storage";
-import type { Deck, SortMode, ViewMode } from "./lib/types";
+import type { BoardType, Deck, SortMode, ViewMode } from "./lib/types";
 
 const VIEW_STORAGE_KEY = "mtg-deck-tally/view-mode";
 const SORT_STORAGE_KEY = "mtg-deck-tally/sort-mode";
@@ -34,6 +35,8 @@ export default function App() {
       ? (saved as ViewMode)
       : "text";
   });
+  const [activeBoard, setActiveBoard] = useState<BoardType>("main");
+  const [shoppingListOpen, setShoppingListOpen] = useState(false);
 
   function handleSortModeChange(next: SortMode) {
     setSortMode(next);
@@ -47,6 +50,32 @@ export default function App() {
 
   useEffect(() => {
     if (deck) saveDeck(deck);
+  }, [deck]);
+
+  const hasSideboard = useMemo(
+    () => (deck?.cards ?? []).some((c) => boardOfSection(c.section) === "sideboard"),
+    [deck],
+  );
+  const hasConsidering = useMemo(
+    () => (deck?.cards ?? []).some((c) => boardOfSection(c.section) === "considering"),
+    [deck],
+  );
+
+  useEffect(() => {
+    if (activeBoard === "sideboard" && !hasSideboard) setActiveBoard("main");
+    if (activeBoard === "considering" && !hasConsidering) setActiveBoard("main");
+  }, [activeBoard, hasSideboard, hasConsidering]);
+
+  const displayedCards = useMemo(() => {
+    if (!deck) return [];
+    return filterCardsByBoard(deck.cards, activeBoard);
+  }, [deck, activeBoard]);
+
+  const { found, total } = useMemo(() => countCards(displayedCards), [displayedCards]);
+
+  const totalMissing = useMemo(() => {
+    if (!deck) return 0;
+    return deck.cards.reduce((acc, c) => acc + Math.max(0, c.qty - c.found), 0);
   }, [deck]);
   // Ensure all cards have scryfallId before rendering to avoid rate‑limited name lookups.
   // Keyed on deck.name so this only re-runs when a *different* deck is loaded, not on every card mark.
@@ -92,7 +121,6 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deck?.name]);
 
-  const { found, total } = useMemo(() => countCards(deck?.cards ?? []), [deck]);
   const [updating, setUpdating] = useState(false);
 
   async function handleUpdateDeck() {
@@ -165,11 +193,23 @@ export default function App() {
   function submitQuery() {
     const needle = query.trim().toLowerCase();
     if (!needle || !deck) return;
-    const match = deck.cards.find(
+    const activeMatch = displayedCards.find(
       (c) => c.found < c.qty && c.name.toLowerCase().includes(needle),
     );
-    if (match) {
-      markCard(match.name, 1, match.info?.scryfallId);
+    if (activeMatch) {
+      markCard(activeMatch.name, 1, activeMatch.info?.scryfallId);
+      setQuery("");
+      return;
+    }
+    const anyMatch = deck.cards.find(
+      (c) => c.found < c.qty && c.name.toLowerCase().includes(needle),
+    );
+    if (anyMatch) {
+      const matchBoard = boardOfSection(anyMatch.section);
+      if (activeBoard !== "all" && activeBoard !== matchBoard) {
+        setActiveBoard(matchBoard);
+      }
+      markCard(anyMatch.name, 1, anyMatch.info?.scryfallId);
       setQuery("");
     }
   }
@@ -234,9 +274,13 @@ export default function App() {
         query={query}
         sortMode={sortMode}
         viewMode={viewMode}
+        activeBoard={activeBoard}
         onQuery={setQuery}
         onSortMode={handleSortModeChange}
         onViewMode={handleViewModeChange}
+        onBoardChange={setActiveBoard}
+        onOpenShoppingList={() => setShoppingListOpen(true)}
+        missingCount={totalMissing}
         onSubmitQuery={submitQuery}
         onReset={() => setDeck({ ...deck, cards: deck.cards.map((card) => ({ ...card, found: 0 })) })}
         onChangeDeck={() => {
@@ -248,8 +292,21 @@ export default function App() {
         updating={updating}
       />
       <main>
-        <CardList deck={deck} sortMode={sortMode} viewMode={viewMode} query={query} onMark={markCard} />
+        <CardList
+          deck={deck}
+          cards={displayedCards}
+          sortMode={sortMode}
+          viewMode={viewMode}
+          query={query}
+          onMark={markCard}
+        />
       </main>
+      <ShoppingListModal
+        cards={deck.cards}
+        deckName={deck.name}
+        isOpen={shoppingListOpen}
+        onClose={() => setShoppingListOpen(false)}
+      />
     </div>
   );
 }

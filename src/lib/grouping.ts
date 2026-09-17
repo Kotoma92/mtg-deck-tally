@@ -1,4 +1,16 @@
-import type { DeckCard, SortMode } from "./types";
+import type { BoardType, DeckCard, SortMode } from "./types";
+
+export function boardOfSection(section: string): "main" | "sideboard" | "considering" {
+  const s = (section || "").toLowerCase();
+  if (s.includes("consider") || s.includes("maybe")) return "considering";
+  if (/\bside/i.test(s)) return "sideboard";
+  return "main";
+}
+
+export function filterCardsByBoard(cards: DeckCard[], board: BoardType): DeckCard[] {
+  if (board === "all") return cards;
+  return cards.filter((card) => boardOfSection(card.section) === board);
+}
 
 /** Broad card types, in the order players usually sort a physical deck. */
 const TYPE_ORDER = [
@@ -68,9 +80,10 @@ export function groupCards(cards: DeckCard[], mode: SortMode): CardGroup[] {
   if (mode === "alpha") {
     const distinctSections = new Set(cards.map((c) => c.section.trim().toLowerCase()));
     if (distinctSections.size <= 1) {
+      const defaultName = cards[0]?.section || "Deck";
       return [
         {
-          name: "Deck",
+          name: defaultName,
           cards: [...cards].sort((a, b) => a.name.localeCompare(b.name)),
         },
       ];

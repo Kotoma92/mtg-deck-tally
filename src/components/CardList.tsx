@@ -7,6 +7,7 @@ import { VisualCard } from "./VisualCard";
 
 type Props = {
   deck: Deck;
+  cards: DeckCard[];
   sortMode: SortMode;
   viewMode: ViewMode;
   query: string;
@@ -29,9 +30,9 @@ function distributeCards<T>(cards: T[], columnCount: number): T[][] {
   return columns;
 }
 
-export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
+export function CardList({ deck, cards, sortMode, viewMode, query, onMark }: Props) {
   const needle = query.trim().toLowerCase();
-  const groups = groupCards(deck.cards, sortMode);
+  const groups = groupCards(cards, sortMode);
   const containerRef = useRef<HTMLDivElement>(null);
   const [columnCount, setColumnCount] = useState(() => {
     if (typeof window === "undefined") return 2;
@@ -64,6 +65,10 @@ export function CardList({ deck, sortMode, viewMode, query, onMark }: Props) {
       };
     })
     .filter((group) => group.remaining.length || group.complete.length);
+
+  if (!cards.length) {
+    return <p className="empty-msg">No cards in this section.</p>;
+  }
 
   if (!visibleGroups.length) {
     return (

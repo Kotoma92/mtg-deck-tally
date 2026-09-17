@@ -72,12 +72,21 @@ async function fetchMoxfield(id) {
 
   const commanders = moxfieldBoard(deck, "commanders").map((entry) => entry.card.name);
   const cards = [];
-  for (const board of ["commanders", "mainboard", "companions"]) {
+  for (const board of ["commanders", "mainboard", "companions", "sideboard", "maybeboard"]) {
     for (const entry of moxfieldBoard(deck, board)) {
       cards.push({
         name: entry.card.name,
         qty: entry.quantity ?? 1,
-        section: board === "mainboard" ? "Deck" : board === "commanders" ? "Commander" : "Companion",
+        section:
+          board === "mainboard"
+            ? "Deck"
+            : board === "commanders"
+            ? "Commander"
+            : board === "companions"
+            ? "Companion"
+            : board === "sideboard"
+            ? "Sideboard"
+            : "Considering",
         scryfallId: entry.card?.scryfall_id || undefined,
       });
     }
@@ -94,14 +103,21 @@ async function fetchArchidekt(id) {
     const name = entry.card?.oracleCard?.name ?? entry.card?.displayName;
     if (!name) continue;
     const categories = entry.categories || [];
-    // Archidekt marks sideboard-ish cards with a modifier; skip maybeboard entries.
-    if (entry.modifier === "Maybeboard") continue;
     const isCommander = categories.includes("Commander");
     if (isCommander) commanders.push(name);
+    const isSideboard = entry.modifier === "Sideboard" || categories.includes("Sideboard");
+    const isMaybeboard = entry.modifier === "Maybeboard" || categories.includes("Maybeboard");
+    const section = isCommander
+      ? "Commander"
+      : isSideboard
+      ? "Sideboard"
+      : isMaybeboard
+      ? "Considering"
+      : "Deck";
     cards.push({
       name,
       qty: entry.quantity ?? 1,
-      section: isCommander ? "Commander" : "Deck",
+      section,
       scryfallId: entry.card?.uid || undefined,
     });
   }

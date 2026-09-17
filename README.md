@@ -4,6 +4,10 @@ Check a physical Magic deck against its list, card by card. Click each card as
 you find it in the pile; the page tracks what's left, keeps your progress across
 reloads, and displays your commander's artwork.
 
+Includes dedicated **Sideboard & Considering** board navigation and a **Shopping List**
+export for copying or downloading your missing cards directly into TCGplayer, Cardmarket,
+or Moxfield.
+
 Built with React + Vite. Card data comes from a SQLite index of Scryfall's
 oracle data that the browser queries directly over HTTP range requests.
 

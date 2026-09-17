@@ -36,3 +36,5 @@ export type Deck = {
 export type SortMode = "alpha" | "mana" | "type";
 
 export type ViewMode = "text" | "stacked" | "full";
+
+export type BoardType = "main" | "sideboard" | "considering" | "all";

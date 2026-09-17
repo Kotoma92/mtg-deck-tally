@@ -128,7 +128,8 @@ export async function prepareDeckFromText(
   const seenEligible = new Set<string>();
   for (const c of cards) {
     const key = c.name.toLowerCase();
-    if (c.info?.canBeCommander && !seenEligible.has(key)) {
+    const isMain = !/side|consider|maybe/i.test(c.section);
+    if (c.info?.canBeCommander && isMain && !seenEligible.has(key)) {
       seenEligible.add(key);
       eligibleCommanders.push(c);
     }
@@ -196,7 +197,16 @@ export async function buildDeckFromUrl(
   const payload = (await response.json()) as ImportedDeck;
   if (!response.ok) throw new Error(payload.error ?? "Couldn't load that deck.");
 
-  // Keep an equivalent text form so "Edit list" still has something to show.
-  const rawText = payload.cards.map((card) => `${card.qty} ${card.name}`).join("\n");
+  // Keep an equivalent text form with section headings so "Edit list" preserves boards.
+  const bySection = new Map<string, RawCard[]>();
+  for (const card of payload.cards) {
+    const sec = card.section || "Deck";
+    const list = bySection.get(sec) ?? [];
+    list.push(card);
+    bySection.set(sec, list);
+  }
+  const rawText = [...bySection.entries()]
+    .map(([sec, list]) => `${sec}\n` + list.map((card) => `${card.qty} ${card.name}`).join("\n"))
+    .join("\n\n");
   return buildDeck({ ...payload, url, rawText }, previous);
 }
