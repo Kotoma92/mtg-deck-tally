@@ -124,104 +124,52 @@ header.landing-header {
   font-weight: 600;
 }
 
-/* The commander's artwork, behind the header text. The horizontal inset breaks
-   it out of the centred column so the banner spans the full viewport. */
+/* The commander's artwork, centered in the middle of the full viewport and extending down. */
 .header-art {
   position: absolute;
-  inset: 0 calc(-50vw + 50%);
+  top: 0;
+  left: calc(-50vw + 50%);
+  width: 100vw;
+  height: min(750px, 80vh);
   z-index: 0;
   display: flex;
-  overflow: hidden;
-}
-
-.header-art {
-  position: absolute;
-  inset: 0 calc(-50vw + 50%);
-  z-index: 0;
-  display: flex;
+  justify-content: center;
+  align-items: flex-start;
   overflow: hidden;
   pointer-events: none;
 }
 
-/* Ambient blurred backdrop: gives the whole banner width color & atmosphere */
-.header-art-backdrop {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  overflow: hidden;
-}
-
-.header-art-backdrop img {
+.header-art img {
   flex: 1 1 0;
   min-width: 0;
-  width: 100%;
+  max-width: 1300px;
   height: 100%;
   object-fit: cover;
-  object-position: center 50%;
-  filter: blur(12px) saturate(1.1) opacity(0.35);
-  transform: scale(1.15);
+  object-position: center 15%;
+  opacity: 0.55;
+  filter: saturate(1.1) contrast(1.05);
 }
 
-.header-art-backdrop::after {
+/* Fade the art down into the page and feather sides on wide viewports */
+.header-art::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--paper) 25%, transparent) 0%,
-    color-mix(in srgb, var(--paper) 55%, transparent) 40%,
-    color-mix(in srgb, var(--paper) 85%, transparent) 75%,
-    var(--paper) 100%
-  );
-}
-
-/* Crisp full-view artwork spotlight: shows the full uncropped illustration softly blended */
-.header-art-spotlight {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: calc(50vw - 50%);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  max-width: min(640px, 50vw);
-  pointer-events: none;
-  overflow: hidden;
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    rgba(0, 0, 0, 0.3) 12%,
-    rgba(0, 0, 0, 0.9) 45%,
-    black 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    rgba(0, 0, 0, 0.3) 12%,
-    rgba(0, 0, 0, 0.9) 45%,
-    black 100%
-  );
-}
-
-.header-art-spotlight .spotlight-img {
-  height: 100%;
-  width: auto;
-  max-height: 260px;
-  object-fit: contain;
-  object-position: right center;
-  opacity: 0.82;
-  filter: saturate(1.08);
-  mask-image: linear-gradient(to bottom, black 68%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 68%, transparent 100%);
-}
-
-@media (max-width: 768px) {
-  .header-art-spotlight {
-    right: 0;
-    max-width: 80vw;
-    opacity: 0.4;
-  }
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--paper) 20%, transparent) 0%,
+      color-mix(in srgb, var(--paper) 45%, transparent) 40%,
+      color-mix(in srgb, var(--paper) 75%, transparent) 70%,
+      var(--paper) 100%
+    ),
+    linear-gradient(
+      to right,
+      var(--paper) 0%,
+      transparent 15%,
+      transparent 85%,
+      var(--paper) 100%
+    );
 }
 
 /* Positioned so it paints above .header-art, which is absolutely positioned. */
