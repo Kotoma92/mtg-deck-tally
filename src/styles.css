@@ -277,11 +277,6 @@ header:has(.header-art) :is(h1, .tagline, .progress-stat, .deck-meta) {
   color: var(--ink-soft);
 }
 
-.commander::before {
-  content: "⌘ ";
-  color: var(--accent);
-}
-
 .identity {
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.72rem;
@@ -1255,9 +1250,6 @@ textarea {
   line-height: 1.2;
 }
 
-.compact-commander .commander-symbol {
-  color: var(--accent);
-}
 
 .compact-right {
   display: flex;
