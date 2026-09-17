@@ -11,6 +11,35 @@ type Props = {
   onCancel: () => void;
 };
 
+const SAMPLE_PASTE_DECK = `Commander
+1 The Archimandrite
+
+Deck
+1 Brainstorm
+1 Counterspell
+1 Sol Ring
+1 Swords to Plowshares
+1 Rhystic Study
+1 Smothering Tithe
+1 Cyclonic Rift
+1 Teferi's Protection
+1 Lightning Greaves
+1 Arcane Signet
+1 Command Tower
+1 Hallowed Fountain
+1 Sacred Foundry
+1 Steam Vents
+1 Flooded Strand
+
+Sideboard
+1 Rest in Peace
+1 Silence
+1 Flusterstorm
+
+Considering
+1 Esper Sentinel
+1 Fierce Guardianship`;
+
 export function ImportPanel({ initialText, busy, error, canCancel, onPaste, onLink, onCancel }: Props) {
   const hasSavedUser = typeof window !== "undefined" && !!localStorage.getItem("mtg-deck-tally/moxfield-user");
   const [mode, setMode] = useState<"moxfield" | "link" | "paste">(() => {
@@ -23,15 +52,15 @@ export function ImportPanel({ initialText, busy, error, canCancel, onPaste, onLi
 
   return (
     <section className="import-panel">
-      <div className="tabs" role="tablist">
+      <div className="tabs landing-tabs" role="tablist">
         <button role="tab" aria-selected={mode === "moxfield"} onClick={() => setMode("moxfield")}>
-          Moxfield decks
+          <span className="tab-icon">🎴</span> Moxfield decks
         </button>
         <button role="tab" aria-selected={mode === "link"} onClick={() => setMode("link")}>
-          From a link
+          <span className="tab-icon">🔗</span> From a link
         </button>
         <button role="tab" aria-selected={mode === "paste"} onClick={() => setMode("paste")}>
-          Paste a list
+          <span className="tab-icon">📋</span> Paste a list
         </button>
       </div>
 
@@ -57,6 +86,31 @@ export function ImportPanel({ initialText, busy, error, canCancel, onPaste, onLi
             aria-label="Deck link"
             autoComplete="off"
           />
+          <div className="sample-chips">
+            <span className="sample-label">Try a demo:</span>
+            <button
+              type="button"
+              className="sample-chip"
+              onClick={() => {
+                setUrl("https://moxfield.com/decks/fazbKkJmokaC4uDKjWTxFQ");
+                onLink("https://moxfield.com/decks/fazbKkJmokaC4uDKjWTxFQ");
+              }}
+              disabled={busy}
+            >
+              Zhulodok Eldrazi (Moxfield)
+            </button>
+            <button
+              type="button"
+              className="sample-chip"
+              onClick={() => {
+                setUrl("https://archidekt.com/decks/4172826");
+                onLink("https://archidekt.com/decks/4172826");
+              }}
+              disabled={busy}
+            >
+              The Archimandrite (Archidekt)
+            </button>
+          </div>
           <div className="actions">
             {canCancel && (
               <button type="button" onClick={onCancel}>
@@ -80,6 +134,17 @@ export function ImportPanel({ initialText, busy, error, canCancel, onPaste, onLi
             In Moxfield: open the deck → the <strong>⋯</strong> menu → <strong>Export</strong> →{" "}
             <strong>Text</strong>. Quantities, section headings, set codes and foil markers are all handled.
           </p>
+          <div className="sample-chips">
+            <span className="sample-label">Need a list to test?</span>
+            <button
+              type="button"
+              className="sample-chip"
+              onClick={() => setText(SAMPLE_PASTE_DECK)}
+              disabled={busy}
+            >
+              Paste Archimandrite + Sideboard
+            </button>
+          </div>
           <textarea
             value={text}
             onChange={(event) => setText(event.target.value)}
