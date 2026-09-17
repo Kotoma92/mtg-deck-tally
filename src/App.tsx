@@ -5,6 +5,7 @@ import { DeckHeader } from "./components/DeckHeader";
 import { ImportPanel } from "./components/ImportPanel";
 import { buildDeckFromUrl, finalizeDeck, prepareDeckFromText, type PreparedDeck } from "./lib/buildDeck";
 import { countCards } from "./lib/grouping";
+import { lookupCards } from "./lib/cards";
 import { clearDeck, loadDeck, saveDeck } from "./lib/storage";
 import type { Deck, SortMode, ViewMode } from "./lib/types";
 
@@ -47,6 +48,26 @@ export default function App() {
   useEffect(() => {
     if (deck) saveDeck(deck);
   }, [deck]);
+
+  // If cards in stored deck lack scryfallId, enrich them in background so direct CDN images load
+  useEffect(() => {
+    if (!deck) return;
+    const needsEnrichment = deck.cards.some((c) => c.info && !c.info.scryfallId);
+    if (!needsEnrichment) return;
+
+    lookupCards(deck.cards.map((c) => c.name)).then((cardMap) => {
+      setDeck((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          cards: current.cards.map((c) => {
+            const fresh = cardMap.get(c.name.toLowerCase());
+            return fresh ? { ...c, info: fresh } : c;
+          }),
+        };
+      });
+    });
+  }, [deck?.name]);
 
   const { found, total } = useMemo(() => countCards(deck?.cards ?? []), [deck]);
 
