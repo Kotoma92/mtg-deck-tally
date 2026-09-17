@@ -73,16 +73,8 @@ export default {
       const version = url.searchParams.get("version") || "normal";
       if (!id && !name) return new Response("Missing card id or name", { status: 400 });
 
-      // Check Cloudflare Edge Cache
-      // @ts-ignore
-      const cache = typeof caches !== "undefined" && caches.default ? caches.default : null;
-      const cacheKey = new Request(url.toString(), { method: "GET" });
-      if (cache) {
-        const cached = await cache.match(cacheKey);
-        if (cached) return cached;
-      }
-
-      // 1. Direct redirect to Scryfall CDN if Scryfall ID is available (no proxying, full CDN speed)
+      // 1. Direct redirect to Scryfall CDN if Scryfall ID is available (no proxying, full CDN speed).
+      // Skip worker-side caching — Scryfall's own CDN handles caching for redirected requests.
       if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
         const cdnUrl = `https://cards.scryfall.io/${version}/front/${id[0]}/${id[1]}/${id}.jpg`;
         return new Response(null, {
@@ -93,6 +85,15 @@ export default {
             "Access-Control-Allow-Origin": "*",
           },
         });
+      }
+
+      // For name-based fallback, check Cloudflare Edge Cache first (avoids repeat API calls)
+      // @ts-ignore
+      const cache = typeof caches !== "undefined" && caches.default ? caches.default : null;
+      const cacheKey = new Request(url.toString(), { method: "GET" });
+      if (cache) {
+        const cached = await cache.match(cacheKey);
+        if (cached) return cached;
       }
 
       // 2. Fallback search by exact name if id is missing or 404
