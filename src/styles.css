@@ -1094,6 +1094,14 @@ textarea {
   align-items: center;
 }
 
+.header-action-btns button {
+  height: 37px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .compact-deck-info {
   display: flex;
   flex-direction: column;
@@ -1237,8 +1245,8 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 35px;
-  height: 35px;
+  width: 37px;
+  height: 37px;
   padding: 0;
   color: var(--ink-soft);
   flex-shrink: 0;
@@ -1438,16 +1446,7 @@ textarea {
 }
 
 .btn-shopping-list {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.82rem;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 5px 10px;
-  color: var(--ink);
-  cursor: pointer;
+  gap: 6px;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
