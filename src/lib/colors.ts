@@ -47,7 +47,11 @@ export function colorLabel(letters: string[]): string {
 }
 
 /** True when a card may not legally go in a deck led by these commanders. */
-export function outsideIdentity(cardIdentity: string, commanderIdentity: string[]): boolean {
-  if (!commanderIdentity.length) return false;
+export function outsideIdentity(
+  cardIdentity: string,
+  commanderIdentity: string[],
+  hasCommander: boolean = true,
+): boolean {
+  if (!hasCommander) return false;
   return cardIdentity.split("").some((c) => !commanderIdentity.includes(c));
 }

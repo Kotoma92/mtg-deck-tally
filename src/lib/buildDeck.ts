@@ -25,12 +25,14 @@ export async function buildDeck(input: BuildInput, previous?: Deck | null): Prom
   const index = await lookupCards(input.cards.map((card) => card.name));
 
   // Carry checked-off progress across an edit, so fixing a typo doesn't reset you.
-  // Store both the exact printing key and fallback card name so changing printings in Moxfield preserves checkmarks!
+  // Store both the exact printing key, section-specific key, and fallback card name so changing printings in Moxfield preserves checkmarks!
   const priorProgress = new Map<string, number>();
   for (const card of previous?.cards ?? []) {
     if (card.info?.scryfallId) {
+      priorProgress.set(`${card.section}::${card.name.toLowerCase()}::${card.info.scryfallId}`, card.found);
       priorProgress.set(`${card.name.toLowerCase()}::${card.info.scryfallId}`, card.found);
     }
+    priorProgress.set(`${card.section}::${card.name.toLowerCase()}`, card.found);
     if (!priorProgress.has(card.name.toLowerCase())) {
       priorProgress.set(card.name.toLowerCase(), card.found);
     }
@@ -56,8 +58,15 @@ export async function buildDeck(input: BuildInput, previous?: Deck | null): Prom
         }
       : undefined;
 
+    const sectionSpecificKey = `${card.section}::${card.name.toLowerCase()}::${scryfallId ?? ""}`;
+    const sectionNameKey = `${card.section}::${card.name.toLowerCase()}`;
     const progressKey = `${card.name.toLowerCase()}::${scryfallId ?? ""}`;
-    const previousFound = priorProgress.get(progressKey) ?? priorProgress.get(card.name.toLowerCase()) ?? 0;
+    const previousFound =
+      priorProgress.get(sectionSpecificKey) ??
+      priorProgress.get(sectionNameKey) ??
+      priorProgress.get(progressKey) ??
+      priorProgress.get(card.name.toLowerCase()) ??
+      0;
 
     return {
       ...card,
@@ -110,17 +119,24 @@ export async function prepareDeckFromText(
   if (!rawCards.length) throw new Error("No cards found -- paste a list like \"1 Sol Ring\".");
 
   const index = await lookupCards(rawCards.map((c) => c.name));
-  const priorProgress = new Map(
+  const sectionProgress = new Map(
+    (previous?.cards ?? []).map((card) => [`${card.section}::${card.name.toLowerCase()}`, card.found]),
+  );
+  const nameProgress = new Map(
     (previous?.cards ?? []).map((card) => [card.name.toLowerCase(), card.found]),
   );
 
   const cards: DeckCard[] = rawCards.map((card) => {
     const info = index.get(card.name.toLowerCase());
+    const prevFound =
+      sectionProgress.get(`${card.section}::${card.name.toLowerCase()}`) ??
+      nameProgress.get(card.name.toLowerCase()) ??
+      0;
     return {
       ...card,
       name: info?.name ?? card.name,
       info,
-      found: Math.min(priorProgress.get(card.name.toLowerCase()) ?? 0, card.qty),
+      found: Math.min(prevFound, card.qty),
     };
   });
 

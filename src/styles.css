@@ -1,31 +1,17 @@
 :root {
-  --paper: #f7f6f5;
-  --paper-raised: #eae8e6;
-  --ink: #141316;
-  --ink-soft: #635f66;
-  --line: #d6d2d0;
-  --accent: #c62828;
-  --accent-soft: #e57373;
-  --found: #b71c1c;
-  --found-soft: #fde8e8;
-  --alert: #d97706;
+  color-scheme: dark;
+  --paper: #101014;
+  --paper-raised: #19181d;
+  --ink: #f4f3f6;
+  --ink-soft: #9896a0;
+  --line: #2b2a32;
+  --accent: #e53935;
+  --accent-soft: #852222;
+  --found: #e53935;
+  --found-soft: #281215;
+  --alert: #f59e0b;
   /* A paper grain, generated rather than shipped as an image. */
   --grain: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNDAiIGhlaWdodD0iMTQwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44NSIgbnVtT2N0YXZlcz0iMiIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjxmZUNvbG9yTWF0cml4IHR5cGU9Im1hdHJpeCIgdmFsdWVzPSIwIDAgMCAwIDAgIDAgMCAwIDAgMCAgMCAwIDAgMCAwICAwIDAgMCAwLjA1IDAiLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWx0ZXI9InVybCgjbikiLz48L3N2Zz4=");
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #101014;
-    --paper-raised: #19181d;
-    --ink: #f4f3f6;
-    --ink-soft: #9896a0;
-    --line: #2b2a32;
-    --accent: #e53935;
-    --accent-soft: #852222;
-    --found: #e53935;
-    --found-soft: #281215;
-    --alert: #f59e0b;
-  }
 }
 
 * {
@@ -63,26 +49,46 @@ h2 {
 
 /* ---------- header ---------- */
 
-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background-color: var(--paper);
-  background-image: var(--grain);
-  background-size: 140px 140px;
-  padding: 20px 0 14px;
-  border-bottom: 1px solid var(--line);
+header.deck-header {
+  display: contents;
+}
+
+.deck-hero {
+  position: relative;
+  z-index: 1;
+  padding: 20px 0 12px;
 }
 
 /* Give the artwork room to read as a picture rather than a sliver. */
+.deck-hero:has(.header-art),
 header:has(.header-art) {
   padding-top: 76px;
+}
+
+.sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: color-mix(in srgb, var(--paper) 85%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Main card area paints above the commander artwork so cards are never covered */
+main {
+  position: relative;
+  z-index: 2;
 }
 
 header.landing-header {
   position: static;
   border-bottom: 1px solid var(--line);
   padding: 32px 0 20px;
+  background-color: var(--paper);
+  background-image: var(--grain);
+  background-size: 140px 140px;
 }
 
 .landing-header-content {
@@ -97,7 +103,7 @@ header.landing-header {
   font-family: "Fraunces", Georgia, serif;
   font-size: clamp(2rem, 4vw, 2.6rem);
   font-weight: 650;
-  color: #ffffff;
+  color: var(--ink);
   line-height: 1.1;
   margin: 0;
 }
@@ -138,43 +144,52 @@ header.landing-header {
   font-weight: 600;
 }
 
-/* The commander's artwork, behind the header text. The horizontal inset breaks
-   it out of the centred column so the banner spans the full viewport. */
+/* The commander's artwork, centered in the middle of the full viewport and extending down. */
 .header-art {
   position: absolute;
-  inset: 0 calc(-50vw + 50%);
+  top: 0;
+  left: calc(-50vw + 50%);
+  width: 100vw;
+  height: min(750px, 80vh);
   z-index: 0;
   display: flex;
+  justify-content: center;
+  align-items: flex-start;
   overflow: hidden;
+  pointer-events: none;
 }
 
-/* Card art is only ~626px wide, so spanning the viewport upscales it heavily.
-   Blurring owns that instead of fighting it -- the crisp read is the thumbnail
-   below, this layer is atmosphere. */
 .header-art img {
   flex: 1 1 0;
   min-width: 0;
-  width: 100%;
+  max-width: 1300px;
   height: 100%;
   object-fit: cover;
-  object-position: center 30%;
-  filter: blur(3px) saturate(1.08);
-  /* Scale past the edges so the blur doesn't feather in from the sides. */
-  transform: scale(1.08);
+  object-position: center 15%;
+  opacity: 0.55;
+  filter: saturate(1.1) contrast(1.05);
 }
 
-/* Fade the art into the page: visible up top, solid paper by the controls. */
+/* Fade the art down into the page and feather sides on wide viewports */
 .header-art::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--paper) 22%, transparent) 0%,
-    color-mix(in srgb, var(--paper) 52%, transparent) 42%,
-    color-mix(in srgb, var(--paper) 88%, transparent) 72%,
-    var(--paper) 100%
-  );
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--paper) 20%, transparent) 0%,
+      color-mix(in srgb, var(--paper) 45%, transparent) 40%,
+      color-mix(in srgb, var(--paper) 75%, transparent) 70%,
+      var(--paper) 100%
+    ),
+    linear-gradient(
+      to right,
+      var(--paper) 0%,
+      transparent 15%,
+      transparent 85%,
+      var(--paper) 100%
+    );
 }
 
 /* Positioned so it paints above .header-art, which is absolutely positioned. */
@@ -214,6 +229,16 @@ header:has(.header-art) :is(h1, .tagline, .progress-stat, .deck-meta) {
 .progress-stat {
   font-size: 1.15rem;
   white-space: nowrap;
+}
+
+.progress-stat.hero-stat {
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 5px 14px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 .progress-stat span {
@@ -1382,20 +1407,6 @@ textarea {
 }
 
 @media (max-width: 768px) {
-  /* On mobile, header acts as contents so deck-hero scrolls away and sticky-bar sticks */
-  header.deck-header {
-    display: contents;
-  }
-
-  .deck-hero {
-    position: relative;
-    padding: 20px 0 12px;
-  }
-
-  .deck-hero:has(.header-art) {
-    padding-top: 76px;
-  }
-
   .deck-hero .hero-stat {
     display: none;
   }
