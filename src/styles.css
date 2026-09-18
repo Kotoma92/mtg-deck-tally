@@ -1427,7 +1427,9 @@ textarea {
     background-color: var(--paper);
     background-image: var(--grain);
     background-size: 140px 140px;
-    padding: 8px 0;
+    margin-left: -20px;
+    margin-right: -20px;
+    padding: 8px 20px 12px;
     border-bottom: 1px solid var(--line);
   }
 
@@ -1481,6 +1483,7 @@ textarea {
     text-align: center;
     padding: 6px 2px;
     font-size: 0.78rem;
+    line-height: 1.2;
   }
 
   .label-full {
