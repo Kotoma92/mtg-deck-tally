@@ -1495,6 +1495,8 @@ textarea {
   }
 
   .board-tab {
+    flex: 1 1 auto;
+    justify-content: center;
     padding: 5px 8px;
     font-size: 0.78rem;
     gap: 5px;
