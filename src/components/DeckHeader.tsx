@@ -341,9 +341,7 @@ export function DeckHeader({
                   aria-selected={activeBoard === "considering"}
                   onClick={() => onBoardChange("considering")}
                 >
-                  <span className="label-full">Considering</span>
-                  <span className="label-short">Consider</span>{" "}
-                  <span className="tab-badge mono">{considerCount.found}/{considerCount.total}</span>
+                  Considering <span className="tab-badge mono">{considerCount.found}/{considerCount.total}</span>
                 </button>
               )}
               <button
