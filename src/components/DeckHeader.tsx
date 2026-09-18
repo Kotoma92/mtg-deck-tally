@@ -316,7 +316,9 @@ export function DeckHeader({
                 aria-selected={activeBoard === "main"}
                 onClick={() => onBoardChange("main")}
               >
-                Main Deck <span className="tab-badge mono">{mainCount.found}/{mainCount.total}</span>
+                <span className="label-full">Main Deck</span>
+                <span className="label-short">Main</span>{" "}
+                <span className="tab-badge mono">{mainCount.found}/{mainCount.total}</span>
               </button>
               {hasSideboard && (
                 <button
@@ -326,7 +328,9 @@ export function DeckHeader({
                   aria-selected={activeBoard === "sideboard"}
                   onClick={() => onBoardChange("sideboard")}
                 >
-                  Sideboard <span className="tab-badge mono">{sideCount.found}/{sideCount.total}</span>
+                  <span className="label-full">Sideboard</span>
+                  <span className="label-short">Side</span>{" "}
+                  <span className="tab-badge mono">{sideCount.found}/{sideCount.total}</span>
                 </button>
               )}
               {hasConsidering && (
