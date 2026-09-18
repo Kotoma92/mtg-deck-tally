@@ -49,26 +49,46 @@ h2 {
 
 /* ---------- header ---------- */
 
-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background-color: var(--paper);
-  background-image: var(--grain);
-  background-size: 140px 140px;
-  padding: 20px 0 14px;
-  border-bottom: 1px solid var(--line);
+header.deck-header {
+  display: contents;
+}
+
+.deck-hero {
+  position: relative;
+  z-index: 1;
+  padding: 20px 0 12px;
 }
 
 /* Give the artwork room to read as a picture rather than a sliver. */
+.deck-hero:has(.header-art),
 header:has(.header-art) {
   padding-top: 76px;
+}
+
+.sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: color-mix(in srgb, var(--paper) 85%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Main card area paints above the commander artwork so cards are never covered */
+main {
+  position: relative;
+  z-index: 2;
 }
 
 header.landing-header {
   position: static;
   border-bottom: 1px solid var(--line);
   padding: 32px 0 20px;
+  background-color: var(--paper);
+  background-image: var(--grain);
+  background-size: 140px 140px;
 }
 
 .landing-header-content {
@@ -1387,20 +1407,6 @@ textarea {
 }
 
 @media (max-width: 768px) {
-  /* On mobile, header acts as contents so deck-hero scrolls away and sticky-bar sticks */
-  header.deck-header {
-    display: contents;
-  }
-
-  .deck-hero {
-    position: relative;
-    padding: 20px 0 12px;
-  }
-
-  .deck-hero:has(.header-art) {
-    padding-top: 76px;
-  }
-
   .deck-hero .hero-stat {
     display: none;
   }
