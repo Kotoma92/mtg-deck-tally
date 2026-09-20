@@ -531,15 +531,9 @@ textarea {
 /* ---------- card grid layouts ---------- */
 
 .card-grid {
-  display: grid;
-  gap: 6px 10px;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-}
-
-@media (min-width: 1300px) {
-  .card-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+  column-width: 280px;
+  column-count: 4;
+  column-gap: 10px;
 }
 
 .row {
@@ -554,6 +548,11 @@ textarea {
 }
 
 .card-grid .row {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  margin-bottom: 6px;
+  width: 100%;
   border: 1px solid var(--line);
   background: color-mix(in srgb, var(--paper-raised) 50%, transparent);
   border-radius: 7px;
