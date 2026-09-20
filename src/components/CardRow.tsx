@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { cardImageUrl } from "../lib/cards";
+import { useEffect, useState } from "react";
 import type { DeckCard } from "../lib/types";
+import { CardPreview } from "./CardPreview";
 import { ManaCost } from "./ManaCost";
 
 type Props = {
@@ -11,11 +11,23 @@ type Props = {
 };
 
 export function CardRow({ card, illegal, onMark, onUndo }: Props) {
-  const [preview, setPreview] = useState(false);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const done = card.found >= card.qty;
 
+  // Dismiss floating preview when scrolling
+  useEffect(() => {
+    if (!anchorRect) return;
+    const handleScrollOrResize = () => setAnchorRect(null);
+    window.addEventListener("scroll", handleScrollOrResize, { passive: true });
+    window.addEventListener("resize", handleScrollOrResize, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScrollOrResize);
+      window.removeEventListener("resize", handleScrollOrResize);
+    };
+  }, [anchorRect]);
+
   // If a DFC/split card name is long, show the primary (front) face to keep the tile sleek and slim.
-  // The full card name is always retained in the title attribute and for search.
+  // The full card name is always retained in the title attribute if truncated, and for search.
   const displayName =
     card.name.includes(" // ") && card.name.length > 24
       ? card.name.split(" // ")[0]
@@ -26,7 +38,6 @@ export function CardRow({ card, illegal, onMark, onUndo }: Props) {
       className={`row${done ? " done" : ""}`}
       role="button"
       tabIndex={0}
-      title={card.name}
       aria-label={`${card.name}, ${card.found} of ${card.qty} found`}
       onClick={onMark}
       onKeyDown={(event) => {
@@ -35,17 +46,20 @@ export function CardRow({ card, illegal, onMark, onUndo }: Props) {
           onMark();
         }
       }}
-      onMouseEnter={() => setPreview(true)}
-      onMouseLeave={() => setPreview(false)}
-      onFocus={() => setPreview(true)}
-      onBlur={() => setPreview(false)}
+      onMouseEnter={(event) => setAnchorRect(event.currentTarget.getBoundingClientRect())}
+      onMouseLeave={() => setAnchorRect(null)}
+      onFocus={(event) => setAnchorRect(event.currentTarget.getBoundingClientRect())}
+      onBlur={() => setAnchorRect(null)}
     >
       <span className="qty mono">
         {card.qty > 1 && card.found > 0 && !done ? `${card.found}/${card.qty}` : `×${card.qty}`}
       </span>
 
       <span className="name">
-        <span className="card-title" title={card.name}>
+        <span
+          className="card-title"
+          title={displayName !== card.name ? card.name : undefined}
+        >
           {displayName}
         </span>
         {card.info?.manaCost && <ManaCost cost={card.info.manaCost} />}
@@ -70,8 +84,12 @@ export function CardRow({ card, illegal, onMark, onUndo }: Props) {
         </button>
       )}
 
-      {preview && (
-        <img className="card-preview" src={cardImageUrl(card.name, "normal", card.info?.scryfallId)} alt="" loading="lazy" aria-hidden />
+      {anchorRect && (
+        <CardPreview
+          name={card.name}
+          scryfallId={card.info?.scryfallId}
+          anchorRect={anchorRect}
+        />
       )}
     </div>
   );
