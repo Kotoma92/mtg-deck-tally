@@ -13,6 +13,23 @@ npm run dev      # also serves /api/deck, so link imports work locally
 npm run build    # tsc --noEmit && vite build
 ```
 
+## Development Protocol: Grill, Plan, and Delegate
+
+To conserve tokens, accelerate delivery, and eliminate iterative guesswork:
+
+### 1. Grill & Clarify Upfront
+- **Do not jump straight into code or run speculative local builds.**
+- Clarify ambiguous requirements, edge cases, visual expectations, and scope boundaries upfront through interactive questions or an interview.
+- The user can trigger or align on this phase anytime using `/grill-me` or `/plan`.
+
+### 2. Formulate a Detailed Execution Plan
+- Write out a concrete, step-by-step implementation plan before touching code or creating branches.
+- Explicitly detail target files, functions, schema/state adjustments, and acceptance criteria.
+
+### 3. Hand-off Execution to Fast & Cheap Models
+- Once the plan is locked in, delegate implementation tasks to faster, token-efficient subagents (e.g. `flash` or `flash_lite` models via `invoke_subagent`), or invite the user to switch to a lighter model for the execution phase.
+- Minimize token-heavy intermediate test cycles: perform the targeted edits and run `npm run build` once at the end to verify TypeScript and build sanity before staging.
+
 ## Branching & Deployment Strategy
 
 **Never commit directly to `main`. Never deploy directly to production.**
