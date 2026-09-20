@@ -54,11 +54,14 @@ git checkout -b <type>/<short-description>
 - **Automated Staging Deploy**: Opening or updating a PR triggers GitHub Actions (`.github/workflows/deploy.yml`) to automatically build and deploy the branch to **Staging (Beta)** at:
   **`https://beta.tally.rolandtech.org`**
 - The action posts/updates a sticky comment on the PR with the preview link and commit SHA.
-- **Do not merge yet**: Test and QC the live changes on `beta.tally.rolandtech.org`. If fixes are needed, push additional commits to the branch (each push automatically refreshes staging). Request user review/feedback.
+- **CRITICAL: Agents must NEVER merge PRs**: Test and QC the live changes on `beta.tally.rolandtech.org`. If fixes are needed, push additional commits to the branch (each push automatically refreshes staging). Request user review/feedback.
+- **The agent's scope strictly ends after opening the PR and requesting review.**
 
-### 3. Production Deployment (On PR Merge)
-- Once Quality Control (QC) is satisfied and the PR is approved by the user:
-  - Merge the PR into `main` (via GitHub UI or `gh pr merge --squash` / `gh pr merge --merge`).
+### 3. Production Deployment (Strictly Manual by USER)
+- **Only the human user (`Kotoma92`) merges PRs.**
+- Under NO circumstances may an AI agent execute `gh pr merge` or merge branches to `main`.
+- Once Quality Control (QC) is satisfied and the user decides to merge the PR:
+  - The **user** merges the PR into `main` via the GitHub UI or their local CLI.
   - The push to `main` triggers GitHub Actions to automatically deploy to **Production** at:
     **`https://tally.rolandtech.org`**
   - The workflow also redeploys staging so beta stays synced with latest production when no PRs are active.
